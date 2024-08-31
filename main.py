@@ -82,7 +82,7 @@ else:
 def onConnection(interface, topic=pub.AUTO_TOPIC):
     for p in Base.plugins:
         inst = p()
-        inst.onConnect(interface)
+        inst.onConnect()
     print("Node ready")
     interface.sendText("MeshLink is now running - rev "+str(rev)+"\n\n use "+cfg.config["prefix"]+"info for a list of commands",channelIndex = cfg.config["send_channel_index"])
 
