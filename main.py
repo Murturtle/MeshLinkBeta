@@ -84,7 +84,7 @@ def onConnection(interface, topic=pub.AUTO_TOPIC):
         inst = p()
         inst.onConnect()
     print("Node ready")
-    interface.sendText("MeshLink is now running - rev "+str(rev)+"\n\n use "+cfg.config["prefix"]+"info for a list of commands",channelIndex = cfg.config["send_channel_index"])
+    # interface.sendText("MeshLink is now running - rev "+str(rev)+"\n\n use "+cfg.config["prefix"]+"info for a list of commands",channelIndex = cfg.config["send_channel_index"])
 
 
 

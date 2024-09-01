@@ -1,6 +1,6 @@
 import asyncio
 
-def genUserName(packet, interface, details=True):
+def genUserName(interface,packet,details=True):
     if(packet["fromId"] in interface.nodes):
         if(interface.nodes[packet["fromId"]]["user"]):
             ret = "`"+str(interface.nodes[packet["fromId"]]["user"]["shortName"])+" "
