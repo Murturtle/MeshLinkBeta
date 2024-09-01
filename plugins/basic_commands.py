@@ -129,6 +129,18 @@ class basicCommands(plugins.Base):
                         interface.sendText(final_mesh, channelIndex=cfg.config["send_channel_index"], destinationId=packet["toId"])
                         
                 DiscordUtil.send_msg(final_message,client,cfg.config)
+            else:
+                if(cfg.config["send_packets"]):
+                    if((packet["fromId"] == interface.getMyNodeInfo()["user"]["id"]) and cfg.config["ignore_self"]):
+                        print("Ignoring self")
+                    else:
+                        final_message+=DiscordUtil.genUserName(interface,packet)+" > "+str(packet["decoded"]["portnum"])
+                DiscordUtil.send_info(final_message,client,cfg.config)
+        else:
+            final_message+=DiscordUtil.genUserName(interface,packet)+" > encrypted/failed"
+            DiscordUtil.send_info(final_message,client,cfg.config)
+            print("failed or encrypted")
+
 
     def onConnect(interface):
         pass
