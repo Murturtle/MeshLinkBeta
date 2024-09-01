@@ -13,7 +13,7 @@ class basicCommands(plugins.Base):
     def start(self):
         print("[INFO] Loading basic commands")
     
-    def onReceive(self,packet,interface):
+    def onReceive(self,packet,interface,client):
         if(cfg.config["verbose_packets"]):
             print("############################################")
             print(packet)
@@ -128,7 +128,7 @@ class basicCommands(plugins.Base):
                         
                         interface.sendText(final_mesh, channelIndex=cfg.config["send_channel_index"], destinationId=packet["toId"])
                         
-                DiscordUtil.send_msg(final_message)
+                DiscordUtil.send_msg(final_message, client, cfg.config)
 
     def onConnect(interface):
         pass
