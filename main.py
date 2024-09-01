@@ -91,7 +91,7 @@ def onConnection(interface, topic=pub.AUTO_TOPIC):
 def onReceive(packet, interface):
     for p in Base.plugins:
         inst = p()
-        inst.onReceive(packet,interface)
+        inst.onReceive(packet,interface,client)
 
     
 def onDisconnect(interface):

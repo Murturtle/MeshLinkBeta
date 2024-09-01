@@ -1,6 +1,6 @@
 import asyncio
 
-def genUserName(packet, interface, details=True):
+def genUserName(interface,packet,details=True):
     if(packet["fromId"] in interface.nodes):
         if(interface.nodes[packet["fromId"]]["user"]):
             ret = "`"+str(interface.nodes[packet["fromId"]]["user"]["shortName"])+" "
@@ -14,7 +14,10 @@ def genUserName(packet, interface, details=True):
             if("position" in interface.nodes[packet["fromId"]]):
                 if("latitude" in interface.nodes[packet["fromId"]]["position"] and "longitude" in interface.nodes[packet["fromId"]]["position"]):
                     ret +=" [map](<https://www.google.com/maps/search/?api=1&query="+str(interface.nodes[packet["fromId"]]["position"]["latitude"])+"%2C"+str(interface.nodes[packet["fromId"]]["position"]["longitude"])+">)"
-
+        return ret
+    else:
+        return "`"+str(packet["fromId"])+"`"
+    
 def send_msg(message,client,config):
     print(message)
     if config["use_discord"]:
