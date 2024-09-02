@@ -13,7 +13,7 @@ class basicCommands(plugins.Base):
     def start(self):
         print("[INFO] Loading basic commands")
     
-    def onReceive(self,packet,interface):
+    def onReceive(self,packet,interface,client):
         if(cfg.config["verbose_packets"]):
             print("############################################")
             print(packet)
@@ -38,19 +38,19 @@ class basicCommands(plugins.Base):
                         final_ping = "pong"
                         interface.sendText(final_ping,channelIndex=cfg.config["send_channel_index"])
                         if(cfg.config["send_mesh_commands_to_discord"]):
-                                DiscordUtil.send_msg("`MeshLink`> "+final_info)
+                                DiscordUtil.send_msg("`MeshLink`> "+final_ping,client,cfg.config)
                     
                     elif (noprefix.startswith("info")):
                         final_info = "<- info ->\n"+"ping\n"+"time\n"+"weather\n"+"hf\n"+"mesh"
                         interface.sendText(final_info,channelIndex=cfg.config["send_channel_index"],destinationId=packet["toId"])
                         if(cfg.config["send_mesh_commands_to_discord"]):
-                                DiscordUtil.send_msg("`MeshLink`> "+final_info)
+                                DiscordUtil.send_msg("`MeshLink`> "+final_info,client,cfg.config)
                     
                     elif (noprefix.startswith("time")):
                         final_time = time.strftime('%H:%M:%S')
                         interface.sendText(final_time,channelIndex=cfg.config["send_channel_index"],destinationId=packet["toId"])
                         if(cfg.config["send_mesh_commands_to_discord"]):
-                            DiscordUtil.send_msg("`MeshLink`> "+final_time)
+                            DiscordUtil.send_msg("`MeshLink`> "+final_time,client,cfg.config)
                     
                     elif (noprefix.startswith("weather")):
                         weather_data_res = requests.get("https://api.open-meteo.com/v1/forecast?latitude="+cfg.config["weather_lat"]+"&longitude="+cfg.config["weather_long"]+"&hourly=temperature_2m,precipitation_probability&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timeformat=unixtime&timezone=auto")
@@ -67,7 +67,7 @@ class basicCommands(plugins.Base):
                         print(final_weather)
                         interface.sendText(final_weather,channelIndex=cfg.config["send_channel_index"],destinationId=packet["toId"])
                         if(cfg.config["send_mesh_commands_to_discord"]):
-                            DiscordUtil.send_msg("`MeshLink`> "+final_weather)
+                            DiscordUtil.send_msg("`MeshLink`> "+final_weather,client,cfg.config)
                     
                     elif (noprefix.startswith("hf")):
                         final_hf = ""
@@ -83,7 +83,7 @@ class basicCommands(plugins.Base):
                         interface.sendText(final_hf,channelIndex=cfg.config["send_channel_index"],destinationId=packet["toId"])
 
                         if(cfg.config["send_mesh_commands_to_discord"]):
-                            DiscordUtil.send_msg("`MeshLink`> "+final_hf)
+                            DiscordUtil.send_msg("`MeshLink`> "+final_hf,client,cfg.config)
                     
                     
                     elif (noprefix.startswith("mesh")):
@@ -128,7 +128,19 @@ class basicCommands(plugins.Base):
                         
                         interface.sendText(final_mesh, channelIndex=cfg.config["send_channel_index"], destinationId=packet["toId"])
                         
-                DiscordUtil.send_msg(final_message)
+                DiscordUtil.send_msg(final_message,client,cfg.config)
+            else:
+                if(cfg.config["send_packets"]):
+                    if((packet["fromId"] == interface.getMyNodeInfo()["user"]["id"]) and cfg.config["ignore_self"]):
+                        print("Ignoring self")
+                    else:
+                        final_message+=DiscordUtil.genUserName(interface,packet)+" > "+str(packet["decoded"]["portnum"])
+                DiscordUtil.send_info(final_message,client,cfg.config)
+        else:
+            final_message+=DiscordUtil.genUserName(interface,packet)+" > encrypted/failed"
+            DiscordUtil.send_info(final_message,client,cfg.config)
+            print("failed or encrypted")
+
 
     def onConnect(interface):
         pass
