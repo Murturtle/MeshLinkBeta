@@ -1,12 +1,8 @@
 from plugins import Base
 
-
-
-
-
 # dont change unless you are making a fork
-update_check_url = "https://raw.githubusercontent.com/Murturtle/MeshLink/main/rev"
-update_url = "https://github.com/Murturtle/MeshLink"
+update_check_url = "https://raw.githubusercontent.com/Murturtle/MeshLinkBeta/main/rev"
+update_url = "https://github.com/Murturtle/MeshLinkBeta"
 rev = 12
 import yaml
 import xml.dom.minidom
@@ -18,14 +14,10 @@ from meshtastic.serial_interface import SerialInterface
 import asyncio
 import time
 import requests
-
 import cfg
-
 
 with open("./config.yml",'r') as file:
     cfg.config = yaml.safe_load(file)
-
-
 
 config_options = [
     "max_message_length",
@@ -49,7 +41,6 @@ config_options = [
     "send_mesh_commands_to_discord",
 ]
 
-
 for i in config_options:
     if i not in cfg.config:
         print("Config option "+i+" missing in config.yml (check github for example)")
@@ -59,11 +50,10 @@ for i in cfg.config:
     if i not in config_options:
         print("Config option "+i+" is not needed anymore")
 
-for asdf in Base.plugins:
-    inst = asdf()
+for plugin in Base.plugins:
+    inst = plugin()
     inst.start()
 print(Base.plugins)
-
 
 oversion = requests.get(update_check_url)
 if(oversion.ok):
@@ -78,7 +68,6 @@ if cfg.config["use_discord"]:
 else:
     client = None
 
-
 def onConnection(interface, topic=pub.AUTO_TOPIC):
     for p in Base.plugins:
         inst = p()
@@ -86,14 +75,11 @@ def onConnection(interface, topic=pub.AUTO_TOPIC):
     print("Node ready")
     interface.sendText("MeshLink is now running - rev "+str(rev)+"\n\n use "+cfg.config["prefix"]+"info for a list of commands",channelIndex = cfg.config["send_channel_index"])
 
-
-
 def onReceive(packet, interface):
     for p in Base.plugins:
         inst = p()
         inst.onReceive(packet,interface,client)
 
-    
 def onDisconnect(interface):
     for p in Base.plugins:
         inst = p()
