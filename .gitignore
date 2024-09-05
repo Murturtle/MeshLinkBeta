@@ -1,1 +1,3 @@
 config.yml
+__pycache__/
+plugins/**/__pycache__/
