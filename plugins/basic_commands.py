@@ -107,7 +107,7 @@ class basicCommands(plugins.Base):
                             final_mesh += "\n chutil avg: N/A"
                             
                         if(cfg.config["send_mesh_commands_to_discord"]):
-                            DiscordUtil.send_msg("`MeshLink`> "+final_mesh)
+                            DiscordUtil.send_msg("`MeshLink`> "+final_mesh,client,cfg.config)
 
                         # # temperature average 
                         # nodes_with_temp = 0
@@ -131,10 +131,13 @@ class basicCommands(plugins.Base):
                 DiscordUtil.send_msg(final_message,client,cfg.config)
             else:
                 if(cfg.config["send_packets"]):
-                    if((packet["fromId"] == interface.getMyNodeInfo()["user"]["id"]) and cfg.config["ignore_self"]):
-                        print("Ignoring self")
-                    else:
-                        final_message+=DiscordUtil.genUserName(interface,packet)+" > "+str(packet["decoded"]["portnum"])
+                    try:
+                        if((packet["fromId"] == interface.getMyNodeInfo()["user"]["id"]) and cfg.config["ignore_self"]):
+                            print("Ignoring self")
+                        else:
+                            final_message+=DiscordUtil.genUserName(interface,packet)+" > "+str(packet["decoded"]["portnum"])
+                    except TypeError as e:
+                        print(f"TypeError: {e}. We don't have our own nodenum.")
                 DiscordUtil.send_info(final_message,client,cfg.config)
         else:
             final_message+=DiscordUtil.genUserName(interface,packet)+" > encrypted/failed"
