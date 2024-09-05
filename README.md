@@ -1,4 +1,4 @@
-# MeshLink
+# MeshLink (Beta)
 ## Features
 
  - Send messages to and from discord
