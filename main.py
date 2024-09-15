@@ -1,8 +1,8 @@
 from plugins import Base
 
 # dont change unless you are making a fork
-update_check_url = "https://raw.githubusercontent.com/Murturtle/MeshLink/main/rev"
-update_url = "https://github.com/Murturtle/MeshLink"
+update_check_url = "https://raw.githubusercontent.com/Murturtle/MeshLinkBeta/main/rev"
+update_url = "https://github.com/Murturtle/MeshLinkBeta"
 rev = 12
 import yaml
 import xml.dom.minidom
