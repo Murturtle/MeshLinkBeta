@@ -84,7 +84,7 @@ def onReceive(packet, interface):
         inst.onReceive(packet,interface,client)
         
     if cfg.config["use_ai"]:
-        gpt_handle_meshtastic_message(packet, interface, client)
+        gpt_handle_meshtastic_message(packet, interface, client, cfg.config)
     
 def onDisconnect(interface):
     for p in Base.plugins:
@@ -135,7 +135,7 @@ if cfg.config["use_discord"]:
                 return
         
         if cfg.config["use_ai"]:    
-            await gpt_handle_discord_message(message, interface)
+            await gpt_handle_discord_message(message, interface, cfg.config)
 
 try:
     if cfg.config["use_discord"]:
