@@ -53,8 +53,8 @@ for i in cfg.config:
     if i not in config_options:
         print("Config option "+i+" is not needed anymore")
 
-for asdf in Base.plugins:
-    inst = asdf()
+for plugin in Base.plugins:
+    inst = plugin()
     inst.start()
 print(Base.plugins)
 
