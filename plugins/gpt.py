@@ -19,8 +19,11 @@ async def gpt_handle_discord_message(message, interface, config):
             ai_client = gpt_setup(config)
             response = ai_client.chat.completions.create(
                 model="gpt-4o-mini",
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=30
+                messages=[
+                    {"role": "system", "content": "Make a short comment not exceeding 20 words" },
+                    {"role": "user", "content": prompt}
+                    ],
+                max_tokens=60
             )
 
             gpt_response = response.choices[0].message.content.strip()
@@ -50,8 +53,11 @@ def gpt_handle_meshtastic_message(packet, interface, client, config):
                 ai_client = gpt_setup(config)
                 response = ai_client.chat.completions.create(
                     model="gpt-4o-mini",
-                    messages=[{"role": "user", "content": prompt}],
-                    max_tokens=30
+                    messages=[
+                        {"role": "system", "content": "Make a short comment not exceeding 20 words" },
+                        {"role": "user", "content": prompt}
+                        ],
+                    max_tokens=60
                 )
 
                 gpt_response = response.choices[0].message.content.strip()
