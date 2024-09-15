@@ -7,7 +7,7 @@ discord_prefix: "$" # discord prefix
 use_serial: True
 radio_ip: "192.168.1.100"
 send_channel_index: 0
-ignore_self: False # dont show your own node in the mesh
+ignore_self: True # dont show your own node in the mesh
 send_packets: True # show all data not just messages
 verbose_packets: True # should the full packet data be shown in the console
 weather_lat: "45.516022"
@@ -17,3 +17,5 @@ ping_on_messages: True
 message_role: "@here"
 use_discord: True
 send_mesh_commands_to_discord: True
+use_ai: False
+open_ai_token: "insert-open-ai-api-key-here"

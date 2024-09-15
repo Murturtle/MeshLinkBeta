@@ -137,7 +137,7 @@ class basicCommands(plugins.Base):
                         else:
                             final_message+=DiscordUtil.genUserName(interface,packet)+" > "+str(packet["decoded"]["portnum"])
                     except TypeError as e:
-                        print(f"TypeError: {e}. We don't have our own nodenum.")
+                        print(f"TypeError: {e}. We don't have our own nodenum yet.")
                 DiscordUtil.send_info(final_message,client,cfg.config)
         else:
             final_message+=DiscordUtil.genUserName(interface,packet)+" > encrypted/failed"

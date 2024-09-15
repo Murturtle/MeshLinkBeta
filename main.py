@@ -1,8 +1,8 @@
 from plugins import Base
 
 # dont change unless you are making a fork
-update_check_url = "https://raw.githubusercontent.com/Murturtle/MeshLinkBeta/main/rev"
-update_url = "https://github.com/Murturtle/MeshLinkBeta"
+update_check_url = "https://raw.githubusercontent.com/Murturtle/MeshLink/main/rev"
+update_url = "https://github.com/Murturtle/MeshLink"
 rev = 12
 import yaml
 import xml.dom.minidom
@@ -15,6 +15,7 @@ import asyncio
 import time
 import requests
 import cfg
+from plugins.gpt import gpt_handle_discord_message, gpt_handle_meshtastic_message
 
 with open("./config.yml",'r') as file:
     cfg.config = yaml.safe_load(file)
@@ -39,6 +40,8 @@ config_options = [
     "message_role",
     "use_discord",
     "send_mesh_commands_to_discord",
+    "use_ai",
+    "open_ai_token"
 ]
 
 for i in config_options:
@@ -50,8 +53,8 @@ for i in cfg.config:
     if i not in config_options:
         print("Config option "+i+" is not needed anymore")
 
-for plugin in Base.plugins:
-    inst = plugin()
+for asdf in Base.plugins:
+    inst = asdf()
     inst.start()
 print(Base.plugins)
 
@@ -79,7 +82,10 @@ def onReceive(packet, interface):
     for p in Base.plugins:
         inst = p()
         inst.onReceive(packet,interface,client)
-
+        
+    if cfg.config["use_ai"]:
+        gpt_handle_meshtastic_message(packet, interface, client)
+    
 def onDisconnect(interface):
     for p in Base.plugins:
         inst = p()
@@ -127,6 +133,9 @@ if cfg.config["use_discord"]:
                 
             else:
                 return
+        
+        if cfg.config["use_ai"]:    
+            await gpt_handle_discord_message(message, interface)
 
 try:
     if cfg.config["use_discord"]:
