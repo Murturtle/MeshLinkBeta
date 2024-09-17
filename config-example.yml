@@ -17,5 +17,3 @@ ping_on_messages: True
 message_role: "@here"
 use_discord: True
 send_mesh_commands_to_discord: True
-use_ai: False
-open_ai_token: Null
