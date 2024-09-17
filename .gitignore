@@ -1,3 +1,4 @@
 config.yml
 __pycache__/
 plugins/**/__pycache__/
+plugins/gpt-config.yml
