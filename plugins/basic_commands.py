@@ -4,6 +4,7 @@ import xml.dom.minidom
 import cfg
 import requests
 import time
+import plugins.liblogger as logger
 
 class basicCommands(plugins.Base):
 
@@ -11,25 +12,15 @@ class basicCommands(plugins.Base):
         pass
 
     def start(self):
-        print("[INFO] Loading basic commands")
+        logger.info("Loading basic commands")
     
     def onReceive(self,packet,interface,client):
-        if(cfg.config["verbose_packets"]):
-            print("############################################")
-            print(packet)
-            print("--------------------------------------------")
-        final_message = ""
         if("decoded" in packet):
-            
-            print("decoded")
             if(packet["decoded"]["portnum"] == "TEXT_MESSAGE_APP"):
-                final_message += DiscordUtil.genUserName(interface,packet,details=False)
 
                 text = packet["decoded"]["text"]
-                final_message += " > "+text
                 
-                if(cfg.config["ping_on_messages"]):
-                    final_message += "\n||"+cfg.config["message_role"]+"||"
+
 
                 if(text.startswith(cfg.config["prefix"])):
                     noprefix = text[len(cfg.config["prefix"]):]
@@ -39,12 +30,6 @@ class basicCommands(plugins.Base):
                         interface.sendText(final_ping,channelIndex=cfg.config["send_channel_index"])
                         if(cfg.config["send_mesh_commands_to_discord"]):
                                 DiscordUtil.send_msg("`MeshLink`> "+final_ping,client,cfg.config)
-                    
-                    elif (noprefix.startswith("info")):
-                        final_info = "<- info ->\n"+"ping\n"+"time\n"+"weather\n"+"hf\n"+"mesh"
-                        interface.sendText(final_info,channelIndex=cfg.config["send_channel_index"],destinationId=packet["toId"])
-                        if(cfg.config["send_mesh_commands_to_discord"]):
-                                DiscordUtil.send_msg("`MeshLink`> "+final_info,client,cfg.config)
                     
                     elif (noprefix.startswith("time")):
                         final_time = time.strftime('%H:%M:%S')
@@ -64,7 +49,7 @@ class basicCommands(plugins.Base):
                             final_weather = final_weather[:-1]
                         else:
                             final_weather += "error fetching"
-                        print(final_weather)
+                        logger.info(final_weather)
                         interface.sendText(final_weather,channelIndex=cfg.config["send_channel_index"],destinationId=packet["toId"])
                         if(cfg.config["send_mesh_commands_to_discord"]):
                             DiscordUtil.send_msg("`MeshLink`> "+final_weather,client,cfg.config)
@@ -79,7 +64,7 @@ class basicCommands(plugins.Base):
                             final_hf = final_hf[:-1]
                         else:
                             final_hf += "error fetching"
-                        print(final_hf)
+                        logger.info(final_hf)
                         interface.sendText(final_hf,channelIndex=cfg.config["send_channel_index"],destinationId=packet["toId"])
 
                         if(cfg.config["send_mesh_commands_to_discord"]):
@@ -128,25 +113,13 @@ class basicCommands(plugins.Base):
                         
                         interface.sendText(final_mesh, channelIndex=cfg.config["send_channel_index"], destinationId=packet["toId"])
                         
-                DiscordUtil.send_msg(final_message,client,cfg.config)
-            else:
-                if(cfg.config["send_packets"]):
-                    try:
-                        if((packet["fromId"] == interface.getMyNodeInfo()["user"]["id"]) and cfg.config["ignore_self"]):
-                            print("Ignoring self")
-                        else:
-                            final_message+=DiscordUtil.genUserName(interface,packet)+" > "+str(packet["decoded"]["portnum"])
-                    except TypeError as e:
-                        print(f"TypeError: {e}. We don't have our own nodenum.")
-                DiscordUtil.send_info(final_message,client,cfg.config)
-        else:
-            final_message+=DiscordUtil.genUserName(interface,packet)+" > encrypted/failed"
-            DiscordUtil.send_info(final_message,client,cfg.config)
-            print("failed or encrypted")
+                
+            
+        
 
 
-    def onConnect(interface):
+    def onConnect(self,interface,client):
         pass
     
-    def onDisconnect(interface):
+    def onDisconnect(self,interface,client):
         pass

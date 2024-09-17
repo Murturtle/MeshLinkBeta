@@ -19,14 +19,12 @@ def genUserName(interface,packet,details=True):
         return "`"+str(packet["fromId"])+"`"
     
 def send_msg(message,client,config):
-    print(message)
     if config["use_discord"]:
         if (client.is_ready()):
             for i in config["message_channel_ids"]:
                 asyncio.run_coroutine_threadsafe(client.get_channel(i).send(message),client.loop)
 
 def send_info(message,client,config):
-    print(message)
     if config["use_discord"]:
         if (client.is_ready()):
             for i in config["info_channel_ids"]:
