@@ -23,7 +23,12 @@ class basicEvents(plugins.Base):
             if(packet["decoded"]["portnum"] == "TEXT_MESSAGE_APP"):
                 final_message += DiscordUtil.genUserName(interface,packet,details=False)
                 text = packet["decoded"]["text"]
-                logger.infogreen(packet["fromId"]+"> "+text)
+
+                if("fromId" in packet):
+                    logger.infogreen(packet["fromId"]+"> "+text)
+                else:
+                    logger.infogreen("Unknown ID> "+text)
+                
                 final_message += " > "+text
                 if(cfg.config["ping_on_messages"]):
                     final_message += "\n||"+cfg.config["message_role"]+"||"
