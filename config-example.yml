@@ -1,4 +1,4 @@
-rev: 13
+rev: 14
 max_message_length: 220 # max discord -> mesh message length
 info_channel_ids: [ 1234567890 ] # seperate using commas 
 message_channel_ids: [ 1234567890 ]
