@@ -15,6 +15,14 @@ import time
 import requests
 import cfg
 import plugins.liblogger as logger
+import signal
+ 
+def handler(signum, frame):
+    logger.infogreen("MeshLink is now stopping!")
+    interface.sendText("MeshLink is now stopping!",channelIndex = cfg.config["send_channel_index"])
+    exit(1)
+ 
+signal.signal(signal.SIGINT, handler)
 
 with open("./config.yml",'r') as file:
     cfg.config = yaml.safe_load(file)
@@ -49,7 +57,7 @@ for i in config_options:
 
 for i in cfg.config:
     if i not in config_options:
-        logger.infoimportant("Config option "+i+" is not needed anymore")
+        logger.infoimportant("Config option "+i+" might not needed anymore")
 
 for plugin in Base.plugins:
     inst = plugin()
