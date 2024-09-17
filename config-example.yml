@@ -3,7 +3,7 @@ max_message_length: 220 # max discord -> mesh message length
 info_channel_ids: [ 1234567890 ] # seperate using commas 
 message_channel_ids: [ 1234567890 ]
 token: "SDFjLKJVLREkjslRVJRLKjVLRKJLRVjrLKVJ" # discord bot token - DO NOT SHARE
-prefix: "?" # mesh command prefix
+prefix: "$" # mesh command prefix
 discord_prefix: "$" # discord prefix
 use_serial: True
 radio_ip: "192.168.1.100"
