@@ -5,6 +5,9 @@ import cfg
 import requests
 import time
 import plugins.liblogger as logger
+import plugins.libinfo as libinfo
+
+
 
 class basicCommands(plugins.Base):
 
@@ -13,6 +16,12 @@ class basicCommands(plugins.Base):
 
     def start(self):
         logger.info("Loading basic commands")
+        libinfo.info.append("ping - pong!")
+        libinfo.info.append("time - sends the time")
+        libinfo.info.append("weather")
+        libinfo.info.append("hf - get the hf radio conditions")
+        libinfo.info.append("mesh - check chutil")
+        logger.info("Added commands to info")
     
     def onReceive(self,packet,interface,client):
         if("decoded" in packet):

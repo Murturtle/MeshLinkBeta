@@ -5,6 +5,7 @@ import cfg
 import requests
 import time
 import plugins.liblogger as logger
+import plugins.libinfo as libinfo
 
 class pluginInfo(plugins.Base):
 
@@ -23,7 +24,9 @@ class pluginInfo(plugins.Base):
                     noprefix = text[len(cfg.config["prefix"]):]
 
                     if (noprefix.startswith("info")):
-                        final_info = "<- info ->\n"+"ping\n"+"time\n"+"weather\n"+"hf\n"+"mesh"
+                        final_info = "<- info ->"
+                        for i in libinfo.info:
+                            final_info+="\n"+i
                         interface.sendText(final_info,channelIndex=cfg.config["send_channel_index"],destinationId=packet["toId"])
                         if(cfg.config["send_mesh_commands_to_discord"]):
                                 DiscordUtil.send_msg("`MeshLink`> "+final_info,client,cfg.config)
