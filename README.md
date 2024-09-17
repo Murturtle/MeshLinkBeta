@@ -30,14 +30,21 @@ mesh
  2. Rename config-example.yml to config.yml before editing (step 10)
  3. Install the Meshtastic python CLI https://meshtastic.org/docs/software/python/cli/installation/
  4. Install discord py https://discordpy.readthedocs.io/en/latest/intro.html
- 5. Create a discord bot https://discord.com/developers
- 6. Give it admin permission in your server and give it read messages intent (google it if you don't know what to do)
- 7. Invite it to a server
- 8. Get the discord channel id (this is where the messages will go) (again google a tutorial if don't know how to get the channel id)
- 9. Get the discord bot token
- 10. Add your discord bot token and channel id(s) to config.yml
+ 5. Create a discord bot https://discord.com/developers (optional)
+ 6. Give it admin permission in your server and give it read messages intent (google it if you don't know what to do) (optional)
+ 7. Invite it to a server (optional)
+ 8. Get the discord channel id (this is where the messages will go) (again google a tutorial if don't know how to get the channel id) (optional)
+ 9. Get the discord bot token (optional)
+ 10. Add your discord bot token and channel id(s) to config.yml (optional)
  11. If you are using serial set `use_serial` to `True` otherwise get your nodes ip and put it into the `radio_ip` setting
- 12. Run the script
+ 12. configure config.yml to your liking
+ 14. `python main.py`
+
+## Updating
+You may receive a log in the console like this:
+`[INFO] New MeshLink update ready https://github.com/Murturtle/MeshLinkBeta`
+
+There will be a way to update easily soon, for now check each files update time and re download them.
 
 ## Suggestions/Feature Requests
 Put them in issues.
