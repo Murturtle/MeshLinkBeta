@@ -11,9 +11,6 @@
  - Time
  - Mesh statistics
 
-### WIP
-- SOS
-
 ## Commands
 **prefix + command**
 ### Discord
