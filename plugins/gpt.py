@@ -2,17 +2,16 @@ import plugins
 import plugins.libdiscordutil as DiscordUtil
 import cfg
 import yaml
+import plugins.liblogger as logger
 from openai import OpenAI
 
 class gpt(plugins.Base):
-
-
 
     def __init__(self):
         pass
 
     def start(self):
-        print ("[INFO] Loading OpenAI")
+        logger.info("[INFO] Loading OpenAI")
 
     def gpt_setup(self):
         with open("./plugins/gpt-config.yml",'r') as file:
@@ -27,7 +26,7 @@ class gpt(plugins.Base):
         """
         if "decoded" in packet and packet["decoded"].get("portnum") == "TEXT_MESSAGE_APP":
             incoming_message = packet["decoded"]["text"]
-            print(f"Received message: {incoming_message}")
+            logger.info(f"Received message: {incoming_message}")
 
             if incoming_message.startswith(cfg.config['prefix'] + 'gpt'):
                 prompt = incoming_message[len(cfg.config['prefix'] + 'gpt'):].strip()
@@ -50,15 +49,14 @@ class gpt(plugins.Base):
 
                     if(cfg.config["send_mesh_commands_to_discord"]):
                         DiscordUtil.send_msg("`MeshLink`> "+gpt_response,client,cfg.config)
-                        print ("Sending to Discord")
+                        logger.info("Sending to Discord")
 
-                    print(f"Sent GPT response: {gpt_response}")
+                    logger.info(f"Sent GPT response: {gpt_response}")
                     
                 else:
-                    print("No prompt provided after '$gpt' command.")
+                    logger.info("No prompt provided after '$gpt' command.")
             else:
-                print("Message does not contain the GPT trigger.")
-
+                logger.info("Message does not contain the GPT trigger.")
 
     def onConnect(self,interface,client):
         pass
