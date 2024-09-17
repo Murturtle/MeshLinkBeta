@@ -1,4 +1,4 @@
-rev: 15 # increment after update!
+rev: 16 # increment after update!
 max_message_length: 220 # max discord -> mesh message length
 info_channel_ids: [ 1234567890 ] # seperate using commas 
 message_channel_ids: [ 1234567890 ]
@@ -8,9 +8,9 @@ discord_prefix: "$" # discord prefix
 use_serial: True
 radio_ip: "192.168.1.100"
 send_channel_index: 0
-ignore_self: False # dont show your own node in the mesh
+ignore_self: True # dont show your own node in the mesh
 send_packets: True # show all data not just messages
-verbose_packets: True # should the full packet data be shown in the console
+verbose_packets: False # should the full packet data be shown in the console
 weather_lat: "45.516022"
 weather_long: "-122.681427"
 max_weather_hours: 8 # how many hours ahead to send weather info for
