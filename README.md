@@ -45,6 +45,7 @@ You may receive a log in the console like this:
 `[INFO] New MeshLink update ready https://github.com/Murturtle/MeshLinkBeta`
 
 There will be a way to update easily soon, for now check each files update time and re download them.
+Make sure to increment the `rev` setting in `config.yml` or you will keep getting notified that there is an update!
 
 ## Suggestions/Feature Requests
 Put them in issues.
