@@ -11,7 +11,7 @@ class gpt(plugins.Base):
         pass
 
     def start(self):
-        logger.info("[INFO] Loading OpenAI")
+        logger.info("Loading OpenAI")
 
     def gpt_setup(self):
         with open("./plugins/gpt-config.yml",'r') as file:
@@ -26,7 +26,7 @@ class gpt(plugins.Base):
         """
         if "decoded" in packet and packet["decoded"].get("portnum") == "TEXT_MESSAGE_APP":
             incoming_message = packet["decoded"]["text"]
-            logger.info(f"Received message: {incoming_message}")
+            #logger.info(f"Received message: {incoming_message}")
 
             if incoming_message.startswith(cfg.config['prefix'] + 'gpt'):
                 prompt = incoming_message[len(cfg.config['prefix'] + 'gpt'):].strip()
@@ -49,14 +49,13 @@ class gpt(plugins.Base):
 
                     if(cfg.config["send_mesh_commands_to_discord"]):
                         DiscordUtil.send_msg("`MeshLink`> "+gpt_response,client,cfg.config)
-                        logger.info("Sending to Discord")
 
                     logger.info(f"Sent GPT response: {gpt_response}")
                     
                 else:
-                    logger.info("No prompt provided after '$gpt' command.")
-            else:
-                logger.info("Message does not contain the GPT trigger.")
+                    logger.info("No prompt provided after 'gpt' command.")
+            #else:
+                #logger.info("Message does not contain the GPT trigger.")
 
     def onConnect(self,interface,client):
         pass
