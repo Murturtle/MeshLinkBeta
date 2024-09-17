@@ -39,7 +39,9 @@ config_options = [
     "ping_on_messages",
     "message_role",
     "use_discord",
-    "send_mesh_commands_to_discord"
+    "send_mesh_commands_to_discord",
+    "use_ai",
+    "open_ai_token"
 ]
 
 for i in config_options:
