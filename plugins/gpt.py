@@ -13,6 +13,7 @@ class gpt(plugins.Base):
     def start(self):
         logger.info("Loading OpenAI")
 
+
     def gpt_setup(self):
         with open("./plugins/gpt-config.yml",'r') as file:
             cfg.gptconfig = yaml.safe_load(file)
