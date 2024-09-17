@@ -3,6 +3,7 @@
 
  - Send messages to and from discord
  - Send packet information to discord
+ - Plugin system
  
  ### Mesh only
  - Weather forecast
