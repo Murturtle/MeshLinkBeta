@@ -30,6 +30,7 @@ with open("./config.yml",'r') as file:
 
 config_options = [
     "rev",
+    "ignore_update_prompt",
     "max_message_length",
     "message_channel_ids",
     "info_channel_ids",
