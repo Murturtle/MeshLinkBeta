@@ -16,6 +16,7 @@ import requests
 import cfg
 import plugins.liblogger as logger
 import signal
+import plugins.libdiscordutil as DiscordUtil
  
 def handler(signum, frame):
     logger.infogreen("MeshLink is now stopping!")
@@ -66,8 +67,17 @@ for plugin in Base.plugins:
 oversion = requests.get(update_check_url)
 if(oversion.ok):
     if(cfg.config["rev"] < int(oversion.text)):
-        for i in range(5):
-            logger.infoimportant("New MeshLink update ready "+update_url)
+        logger.infoimportant("New MeshLink update ready "+update_url)
+        logger.warn("Remember after the update to double check the plugins you want disabled stay disabled")
+        logger.warn("Also remember to increment rev in config.yml")
+        if(not cfg.config["ignore_update_prompt"]):
+            if(input("       Would you like to update MeshLink? y/n ")=="y"):
+                logger.info("running: git pull "+update_url +" main")
+                os.system("git pull "+update_url+" main")
+                logger.infogreen("Start MeshLink to apply updates!")
+                exit(1)
+            else:
+                logger.infoimportant("Ignoring update - use the following command to update: git pull "+update_url+" main")
 else:
     logger.warn("Failed to check for updates using url "+update_check_url+"\x1b[0m")
 
@@ -100,6 +110,7 @@ pub.subscribe(onReceive, "meshtastic.receive")
 
 def init_radio():
     global interface
+    logger.info("Connecting to node...")
     if (cfg.config["use_serial"]):
         interface = SerialInterface()
     else:
@@ -127,11 +138,16 @@ if cfg.config["use_discord"]:
                 if(len(final_message) < cfg.config["max_message_length"] - 1):
                     await message.reply(final_message)
                     interface.sendText(final_message,channelIndex = cfg.config["send_channel_index"])
-                    logger.infogreen("\x1b[35;49m"+final_message)
+                    logger.infodiscord(final_message)
+                    #DiscordUtil.send_msg("DISCORD: "+final_message,client,cfg.config)
                 else:
                     await message.reply("(shortend) "+final_message[:cfg.config["max_message_length"]])
                     interface.sendText(final_message,channelIndex = cfg.config["send_channel_index"])
-                    logger.infogreen("\x1b[35;49m"+final_message[:cfg.config["max_message_length"]])
+                    logger.infodiscord(final_message[:cfg.config["max_message_length"]])
+                    #DiscordUtil.send_msg("DISCORD: "+final_message,client,cfg.config)
+                
+
+                #await message.delete()
                 
             else:
                 return

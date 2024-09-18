@@ -9,3 +9,6 @@ def infoimportant(any):
 
 def infogreen(any):
     print("\x1b[32;49m[INFO] "+str(any)+"\x1b[0m")
+
+def infodiscord(any):
+    print("\x1b[35;49m[DISC] "+str(any)+"\x1b[0m")

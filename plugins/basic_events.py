@@ -24,7 +24,7 @@ class basicEvents(plugins.Base):
                 final_message += DiscordUtil.genUserName(interface,packet,details=False)
                 text = packet["decoded"]["text"]
 
-                if("fromId" in packet):
+                if(packet["fromId"] != None):
                     logger.infogreen(packet["fromId"]+"> "+text)
                 else:
                     logger.infogreen("Unknown ID> "+text)
@@ -40,7 +40,7 @@ class basicEvents(plugins.Base):
                                 if(cfg.config["verbose_packets"]):
                                     logger.info("Ignoring self")
                             else:
-                                final_message+=DiscordUtil.genUserName(interface,packet)+" > "+str(packet["decoded"]["portnum"])
+                                final_message+=DiscordUtil.genUserName(interface,packet)+"> "+str(packet["decoded"]["portnum"])
                         except TypeError as e:
                             logger.infoimportant(f"TypeError: {e}. We don't have our own nodenum yet.")
                     DiscordUtil.send_info(final_message,client,cfg.config)
@@ -54,9 +54,10 @@ class basicEvents(plugins.Base):
                 
 
     def onConnect(self,interface,client):
-        logger.info("Node connected")
+        logger.infogreen("Node connected")
         DiscordUtil.send_msg("MeshLink is now running - rev "+str(cfg.config["rev"]), client, cfg.config)
         interface.sendText("MeshLink is now running - rev "+str(cfg.config["rev"])+"\n\nuse "+cfg.config["prefix"]+"info for a list of commands",channelIndex = cfg.config["send_channel_index"])
 
     def onDisconnect(self,interface,client):
-        DiscordUtil.send_msg("# Connection to radio has been lost...",client, cfg.config)
+        logger.warn("Connection to node has been lost - attemping to reconnect")
+        DiscordUtil.send_msg("# Connection to node has been lost",client, cfg.config)
