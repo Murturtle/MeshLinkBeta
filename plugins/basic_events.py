@@ -29,6 +29,9 @@ class basicEvents(plugins.Base):
                 else:
                     logger.infogreen("Unknown ID> "+text)
                 
+                if(text.lower() == "meshlink"):
+                    interface.sendText("MeshLink is running on this node - rev "+str(cfg.config["rev"])+"\n\nuse "+cfg.config["prefix"]+"info for a list of commands",channelIndex = cfg.config["send_channel_index"])
+                
                 final_message += " > "+text
                 if(cfg.config["ping_on_messages"]):
                     final_message += "\n||"+cfg.config["message_role"]+"||"
