@@ -19,3 +19,4 @@ ping_on_messages: True
 message_role: "@here"
 use_discord: True
 send_mesh_commands_to_discord: True
+send_start_stop: True # should the meshlink announcement be sent on connection and shut down
