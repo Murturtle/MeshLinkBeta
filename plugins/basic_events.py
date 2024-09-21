@@ -59,7 +59,8 @@ class basicEvents(plugins.Base):
     def onConnect(self,interface,client):
         logger.infogreen("Node connected")
         DiscordUtil.send_msg("MeshLink is now running - rev "+str(cfg.config["rev"]), client, cfg.config)
-        interface.sendText("MeshLink is now running - rev "+str(cfg.config["rev"])+"\n\nuse "+cfg.config["prefix"]+"info for a list of commands",channelIndex = cfg.config["send_channel_index"])
+        if(cfg.config["send_start_stop"]):
+            interface.sendText("MeshLink is now running - rev "+str(cfg.config["rev"])+"\n\nuse "+cfg.config["prefix"]+"info for a list of commands",channelIndex = cfg.config["send_channel_index"])
 
     def onDisconnect(self,interface,client):
         logger.warn("Connection to node has been lost - attemping to reconnect")
