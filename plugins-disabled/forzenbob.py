@@ -2,6 +2,7 @@ import plugins
 import plugins.libdiscordutil as DiscordUtil
 import cfg
 import plugins.liblogger as logger
+import plugins.libinfo as libinfo
 
 class pluginZenbob(plugins.Base):
 
@@ -10,6 +11,7 @@ class pluginZenbob(plugins.Base):
 
     def start(self):
         print("[INFO] Loading forzenbob")
+        libinfo.info.append("zenbob - he will never give you up")
     
     def onReceive(self,packet,interface,client):
         final_message = ""
