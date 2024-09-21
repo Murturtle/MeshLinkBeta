@@ -20,7 +20,8 @@ import plugins.libdiscordutil as DiscordUtil
  
 def handler(signum, frame):
     logger.infogreen("MeshLink is now stopping!")
-    interface.sendText("MeshLink is now stopping!",channelIndex = cfg.config["send_channel_index"])
+    if(cfg.config["send_start_stop"]):
+        interface.sendText("MeshLink is now stopping!",channelIndex = cfg.config["send_channel_index"])
     exit(1)
  
 signal.signal(signal.SIGINT, handler)
@@ -49,7 +50,8 @@ config_options = [
     "ping_on_messages",
     "message_role",
     "use_discord",
-    "send_mesh_commands_to_discord"
+    "send_mesh_commands_to_discord",
+    "send_start_stop"
 ]
 
 for i in config_options:
