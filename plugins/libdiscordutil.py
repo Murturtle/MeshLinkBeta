@@ -14,6 +14,11 @@ def genUserName(interface,packet,details=True):
             if("position" in interface.nodes[packet["fromId"]]):
                 if("latitude" in interface.nodes[packet["fromId"]]["position"] and "longitude" in interface.nodes[packet["fromId"]]["position"]):
                     ret +=" [map](<https://www.google.com/maps/search/?api=1&query="+str(interface.nodes[packet["fromId"]]["position"]["latitude"])+"%2C"+str(interface.nodes[packet["fromId"]]["position"]["longitude"])+">)"
+        if("hopLimit" in packet):
+            if("hopStart" in packet):
+                ret+=" `"+str(packet["hopStart"]-packet["hopLimit"])+"`/`"+str(packet["hopStart"])+"`"
+            else:
+                ret+=" `"+str(packet["hopLimit"])+"`"
         return ret
     else:
         return "`"+str(packet["fromId"])+"`"
