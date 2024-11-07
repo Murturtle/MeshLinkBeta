@@ -51,7 +51,7 @@ class basicEvents(plugins.Base):
             final_message+=DiscordUtil.genUserName(interface,packet)+" > encrypted/failed"
             DiscordUtil.send_info(final_message,client,cfg.config)
             if(cfg.config["verbose_packets"]):
-                logger.importantinfo("Failed or encrypted")
+                logger.infoimportant("Failed or encrypted")
                 
             
                 
