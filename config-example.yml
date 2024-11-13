@@ -1,4 +1,4 @@
-rev: 18 # increment after update!
+rev: 19 # increment after update!
 ignore_update_prompt: False # set this to True if you do not want to answer y/n every time there is an update (set to True if using auto restart/startup)
 max_message_length: 220 # max discord -> mesh message length
 info_channel_ids: [ 1234567890 ] # seperate using commas 
