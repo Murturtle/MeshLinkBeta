@@ -19,6 +19,9 @@ def genUserName(interface,packet,details=True):
                 ret+=" `"+str(packet["hopStart"]-packet["hopLimit"])+"`/`"+str(packet["hopStart"])+"`"
             else:
                 ret+=" `"+str(packet["hopLimit"])+"`"
+        if("viaMqtt" in packet):
+            if str(packet["viaMqtt"]) == "True":
+                ret+=" `MQTT`"
         return ret
     else:
         return "`"+str(packet["fromId"])+"`"
