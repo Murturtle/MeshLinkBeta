@@ -17,7 +17,10 @@ import cfg
 import plugins.liblogger as logger
 import signal
 import plugins.libdiscordutil as DiscordUtil
- 
+from datetime import datetime
+import math
+
+
 def handler(signum, frame):
     logger.infogreen("MeshLink is now stopping!")
     if(cfg.config["send_start_stop"]):
@@ -96,6 +99,8 @@ def onConnection(interface, topic=pub.AUTO_TOPIC):
         inst = p()
         inst.onConnect(interface,client)
 
+
+
 def onReceive(packet, interface):
     for p in Base.plugins:
         inst = p()
@@ -116,6 +121,7 @@ def init_radio():
     logger.info("Connecting to node...")
     if (cfg.config["use_serial"]):
         interface = SerialInterface()
+        
     else:
         interface = TCPInterface(hostname=cfg.config["radio_ip"], connectNow=True)
 

@@ -4,6 +4,8 @@ import cfg
 import yaml
 import plugins.liblogger as logger
 from openai import OpenAI
+import plugins.libmesh as LibMesh
+import plugins.libinfo as libinfo
 
 class gpt(plugins.Base):
 
@@ -15,6 +17,7 @@ class gpt(plugins.Base):
 
 
     def gpt_setup(self):
+        libinfo.info.append("gpt - use chatgpt")
         with open("./plugins/gpt-config.yml",'r') as file:
             cfg.gptconfig = yaml.safe_load(file)
 
@@ -46,7 +49,7 @@ class gpt(plugins.Base):
                     gpt_response = response.choices[0].message.content.strip()
 
                     # Send GPT response over Meshtastic
-                    interface.sendText(gpt_response, channelIndex=cfg.config["send_channel_index"])
+                    LibMesh.sendReply(gpt_response,interface,packet)
 
                     if(cfg.config["send_mesh_commands_to_discord"]):
                         DiscordUtil.send_msg("`MeshLink`> "+gpt_response,client,cfg.config)

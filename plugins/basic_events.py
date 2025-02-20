@@ -2,6 +2,7 @@ import plugins
 import plugins.libdiscordutil as DiscordUtil
 import cfg
 import plugins.liblogger as logger
+from meshtastic import mesh_interface
 
 class basicEvents(plugins.Base):
 
@@ -58,6 +59,8 @@ class basicEvents(plugins.Base):
 
     def onConnect(self,interface,client):
         logger.infogreen("Node connected")
+
+
         DiscordUtil.send_msg("MeshLink is now running - rev "+str(cfg.config["rev"]), client, cfg.config)
         if(cfg.config["send_start_stop"]):
             interface.sendText("MeshLink is now running - rev "+str(cfg.config["rev"])+"\n\nuse "+cfg.config["prefix"]+"info for a list of commands",channelIndex = cfg.config["send_channel_index"])

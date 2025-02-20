@@ -1,6 +1,6 @@
-rev: 20 # increment after update!
+rev: 21 # increment after update!
 ignore_update_prompt: False # set this to True if you do not want to answer y/n every time there is an update (set to True if using auto restart/startup)
-max_message_length: 220 # max discord -> mesh message length
+max_message_length: 200 # max discord -> mesh message length
 info_channel_ids: [ 1234567890 ] # seperate using commas 
 message_channel_ids: [ 1234567890 ]
 token: "SDFjLKJVLREkjslRVJRLKjVLRKJLRVjrLKVJ" # discord bot token - DO NOT SHARE
@@ -9,7 +9,7 @@ discord_prefix: "$" # discord prefix
 use_serial: True
 radio_ip: "192.168.1.100"
 send_channel_index: 0
-ignore_self: True # dont show your own node in the mesh
+ignore_self: True # dont show your own node on discord
 send_packets: True # show all data not just messages
 verbose_packets: False # should the full packet data be shown in the console
 weather_lat: "45.516022"
