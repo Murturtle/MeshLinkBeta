@@ -26,12 +26,9 @@ def genUserName(interface,packet,details=True):
     else:
         return "`"+str(packet["fromId"])+"`"
     
-def send_msg(message,client,config,channel_id=None):
+def send_msg(message,client,config):
     if config["use_discord"]:
         if (client.is_ready()):
-            if config.get("secondary_channel_message_ids") and channel_id > 0:
-                for i in config["secondary_channel_message_ids"]:
-                    asyncio.run_coroutine_threadsafe(client.get_channel(i).send(message),client.loop)
             for i in config["message_channel_ids"]:
                 asyncio.run_coroutine_threadsafe(client.get_channel(i).send(message),client.loop)
 
