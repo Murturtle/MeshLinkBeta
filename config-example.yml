@@ -1,22 +1,34 @@
-rev: 21 # increment after update!
+# Read each setting carefully and modify to your needs
+
+### UPDATES
+rev: 22 # increment after update!
 ignore_update_prompt: False # set this to True if you do not want to answer y/n every time there is an update (set to True if using auto restart/startup)
-max_message_length: 200 # max discord -> mesh message length
+check_for_updates: True # set to False to disable update checking
+
+
+### DISCORD SETTINGS
+use_discord: True
+max_message_length: 200 # max discord -> mesh message length and info message length
 info_channel_ids: [ 1234567890 ] # seperate using commas 
-message_channel_ids: [ 1234567890 ]
+message_channel_ids: [ 1234567890 ] 
 token: "SDFjLKJVLREkjslRVJRLKjVLRKJLRVjrLKVJ" # discord bot token - DO NOT SHARE
-prefix: "$" # mesh command prefix
 discord_prefix: "$" # discord prefix
-use_serial: True
-radio_ip: "192.168.1.100"
-send_channel_index: 0
 ignore_self: True # dont show your own node on discord
 send_packets: True # show all data not just messages
+ping_on_messages: True # should the bot add the message_role to the message
+message_role: "@here" # the role on discord to ping on messages, if you dont want to ping everyone set to a custom role
+send_mesh_commands_to_discord: True # send responses to mesh commands to discord
+
+### MESH AND RADIO SETTINGS
+prefix: "$" # mesh command prefix
+use_serial: True # set to False if using tcp
+radio_ip: "192.168.1.100" # ip of the radio if using tcp
+send_channel_index: 0 # the index of the channel to send messages on 
 verbose_packets: False # should the full packet data be shown in the console
-weather_lat: "45.516022"
+send_start_stop: True # should the meshlink announcement be sent on connection and shut down
+
+
+### BUILT IN PLUGINS
+weather_lat: "45.516022" # latitude for for weather plugin
 weather_long: "-122.681427"
 max_weather_hours: 8 # how many hours ahead to send weather info for
-ping_on_messages: True
-message_role: "@here"
-use_discord: True
-send_mesh_commands_to_discord: True
-send_start_stop: True # should the meshlink announcement be sent on connection and shut down

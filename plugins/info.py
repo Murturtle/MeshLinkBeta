@@ -1,38 +1,63 @@
 import plugins
 import plugins.libdiscordutil as DiscordUtil
-import xml.dom.minidom
 import cfg
-import requests
-import time
 import plugins.liblogger as logger
 import plugins.libinfo as libinfo
+import plugins.libcommand as LibCommand
+import plugins.libmesh as LibMesh
 
 class pluginInfo(plugins.Base):
 
     def __init__(self):
         pass
 
+    def calcPages(self, lines):
+        max_len = cfg.config["max_message_length"]
+        if not lines:
+            return 0
+
+        pages = []
+        current_page = ""
+        for line in lines:
+            if len(current_page) + len(line) + 1 > max_len:
+                pages.append(current_page.rstrip("\n"))
+                current_page = ""
+            current_page += line + "\n"
+
+        if current_page:
+            pages.append(current_page.rstrip("\n"))
+
+        return len(pages), pages
+
     def start(self):
         logger.info("Loading info")
-    
-    def onReceive(self,packet,interface,client):
-        final_message = ""
-        if("decoded" in packet):
-            if(packet["decoded"]["portnum"] == "TEXT_MESSAGE_APP"):
-                text = packet["decoded"]["text"]
-                if(text.startswith(cfg.config["prefix"])):
-                    noprefix = text[len(cfg.config["prefix"]):]
 
-                    if (noprefix.startswith("info")):
-                        final_info = "<- info ->"
-                        for i in libinfo.info:
-                            final_info+="\n"+i
-                        interface.sendText(final_info,channelIndex=cfg.config["send_channel_index"],destinationId=packet["toId"])
-                        if(cfg.config["send_mesh_commands_to_discord"]):
-                                DiscordUtil.send_msg("`MeshLink`> "+final_info,client,cfg.config)
+        def cmd_info(packet, interface, client, args):
+            try:
+                page = int(args.strip()) if args.strip() else 0
+                if page < 0:
+                    page = 0
+            except ValueError:
+                page = 0
 
-    def onConnect(self,interface,client):
-        pass
-    
-    def onDisconnect(self,interface,client):
-        pass
+            num_pages, pages = self.calcPages(libinfo.info)
+            
+            if page > num_pages:
+                page = 0
+
+
+            if page == 0:
+                final_info = f"""<- info ->
+Welcome to MeshLink!
+Use '{cfg.config["prefix"]}info <page>' to view different pages.
+This is page 0/{num_pages}"""
+            
+            else:
+                final_info = pages[page-1]
+
+            
+
+            
+            return final_info
+
+        LibCommand.simpleCommand().registerCommand("info", "info <page>", cmd_info)

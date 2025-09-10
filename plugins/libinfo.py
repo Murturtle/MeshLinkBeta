@@ -1,1 +1,1 @@
-info = ["info - show this screen"]
+info = []
