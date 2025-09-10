@@ -3,26 +3,21 @@
 
  - Send messages to and from discord
  - Send packet information to discord
- - Plugin system
+ - Plugin system (see example plugin in `plugins/testcommand.py`)
  
  ### Mesh only
  - Weather forecast
  - Ping
  - HF condition checker
  - Time
- - Mesh statistics
+ - Save position as waypoint with timestamp
+ - ChatGPT with **optional** plugin
+ - Help command with multi page support
 
 ## Commands
 **prefix + command**
 ### Discord
 send (message)
-
-### Mesh
-ping
-weather
-hf
-time
-mesh
 
 ## Setup 
 
