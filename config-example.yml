@@ -9,7 +9,8 @@ check_for_updates: True # set to False to disable update checking
 use_discord: True
 max_message_length: 200 # max discord -> mesh message length and info message length
 info_channel_ids: [ 1234567890 ] # seperate using commas 
-message_channel_ids: [ 1234567890 ] 
+message_channel_ids: [ 1234567890 ]
+secondary_channel_message_ids: [1234567890] # each entry sends the corresponding node channel to a different discord channel, separate using commas
 token: "SDFjLKJVLREkjslRVJRLKjVLRKJLRVjrLKVJ" # discord bot token - DO NOT SHARE
 discord_prefix: "$" # discord prefix
 ignore_self: True # dont show your own node on discord

@@ -41,6 +41,7 @@ config_options = [
     "max_message_length",
     "info_channel_ids",
     "message_channel_ids",
+    "secondary_channel_message_ids",
     "token",
     "discord_prefix",
     "ignore_self",
