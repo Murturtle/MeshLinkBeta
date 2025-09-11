@@ -37,7 +37,7 @@ class simpleCommand():
 
                     if command_name == self.name:
                         reply = self.executeCommand(packet, interface, client, args)
-                        LibMesh.sendReply(reply, interface, packet, cfg.config["send_channel_index"])
+                        LibMesh.sendReply(reply, interface, packet)
 
                         if(cfg.config["send_mesh_commands_to_discord"]):
                                 DiscordUtil.send_msg("`MeshLink`> "+reply, client, cfg.config)

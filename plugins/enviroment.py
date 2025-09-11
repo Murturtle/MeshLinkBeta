@@ -56,14 +56,13 @@ class basicCommands(plugins.Base):
             aqi_data = aqi_data_res.json()
             
             if aqi_data_res.ok:
-                final += f"AQI: {aqi_data["current"]["us_aqi"]}\n"
-                final += f"PM2.5: {aqi_data["current"]["us_aqi_pm2_5"]}\n"
-                final += f"PM10: {aqi_data["current"]["us_aqi_pm10"]}\n"
-                final += f"NO2: {aqi_data["current"]["us_aqi_nitrogen_dioxide"]}\n"
-                final += f"CO: {aqi_data["current"]["us_aqi_carbon_monoxide"]}\n"
-                final += f"O3: {aqi_data["current"]["us_aqi_ozone"]}\n"
-                final += f"SO2: {aqi_data["current"]["us_aqi_sulphur_dioxide"]}\n"
-                final += "(Your position)" if hasPos else "(Config position)" 
+                final += f"AQI: {aqi_data['current']['us_aqi']}\n"
+                final += f"PM2.5: {aqi_data['current']['us_aqi_pm2_5']}\n"
+                final += f"PM10: {aqi_data['current']['us_aqi_pm10']}\n"
+                final += f"NO2: {aqi_data['current']['us_aqi_nitrogen_dioxide']}\n"
+                final += f"CO: {aqi_data['current']['us_aqi_carbon_monoxide']}\n"
+                final += f"O3: {aqi_data['current']['us_aqi_ozone']}\n"
+                final += f"SO2: {aqi_data['current']['us_aqi_sulphur_dioxide']}\n"
             else:
                 final = "Error fetching"
             logger.info(final)
@@ -93,7 +92,7 @@ class basicCommands(plugins.Base):
             if hasPos:
                 ele = requests.get(f"https://api.open-meteo.com/v1/elevation?latitude={lat}&longitude={long}")
                 if ele.ok:
-                    return f"{name} elevation is {ele.json()["elevation"][0]}m asl"
+                    return f"{name} elevation is {ele.json()['elevation'][0]}m asl"
                 else:
                     return "Error fetching"
             else:
