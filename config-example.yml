@@ -28,7 +28,6 @@ verbose_packets: False # should the full packet data be shown in the console
 send_start_stop: True # should the meshlink announcement be sent on connection and shut down
 include_username_prefix: True # include the username prefix in mesh messages from discord
 
-
 ### BUILT IN PLUGINS
 weather_lat: "45.516022" # latitude for for weather plugin
 weather_long: "-122.681427"

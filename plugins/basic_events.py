@@ -3,6 +3,7 @@ import plugins.libdiscordutil as DiscordUtil
 import cfg
 import plugins.liblogger as logger
 from meshtastic import mesh_interface
+import plugins.libmesh as LibMesh
 
 class basicEvents(plugins.Base):
 
@@ -45,7 +46,7 @@ class basicEvents(plugins.Base):
                 logger.infogreen("Unknown ID> " + text)
 
             if text.lower() == "meshlink":
-                interface.sendText("MeshLink is running on this node - rev " + str(cfg.config["rev"]) + "\n\nuse " + cfg.config["prefix"] + "info for a list of commands", channelIndex=cfg.config["send_channel_index"])
+                LibMesh.sendReply("MeshLink is running on this node - rev " + str(cfg.config["rev"]) + "\n\nuse " + cfg.config["prefix"] + "info for a list of commands", interface, packet)
 
             final_message += " > " + text
 
