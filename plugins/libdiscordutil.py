@@ -6,13 +6,10 @@ def genUserName(interface, packet, details=True):
     long = LibMesh.getUserLong(interface, packet)
     lat, lon, hasPos = LibMesh.getPosition(interface, packet)
 
-    if short or long:
-        ret = f"`{short} "
-        if details:
-            ret += f"{packet['fromId']} "
-        ret += f"{long}`"
-    else:
-        ret = f"`{packet['fromId']}`"
+    ret = f"`{short} "
+    if details:
+        ret += f"{packet['fromId']} "
+    ret += f"{long}`"
 
     if details and hasPos:
         ret += f" [map](<https://www.google.com/maps/search/?api=1&query={lat}%2C{lon}>)"
