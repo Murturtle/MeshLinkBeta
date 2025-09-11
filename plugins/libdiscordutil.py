@@ -1,30 +1,32 @@
 import asyncio
+import plugins.libmesh as LibMesh
 
-def genUserName(interface,packet,details=True):
-    if(packet["fromId"] in interface.nodes):
-        if(interface.nodes[packet["fromId"]]["user"]):
-            ret = "`"+str(interface.nodes[packet["fromId"]]["user"]["shortName"])+" "
-            if details:
-                ret+= packet["fromId"]+" "
-            ret+= str(interface.nodes[packet["fromId"]]["user"]["longName"])+"`"
-        else:
-            ret = str(packet["fromId"])
+def genUserName(interface, packet, details=True):
+    short = LibMesh.getUserShort(interface, packet)
+    long = LibMesh.getUserLong(interface, packet)
+    lat, lon, hasPos = LibMesh.getPosition(interface, packet)
 
-        if details:    
-            if("position" in interface.nodes[packet["fromId"]]):
-                if("latitude" in interface.nodes[packet["fromId"]]["position"] and "longitude" in interface.nodes[packet["fromId"]]["position"]):
-                    ret +=" [map](<https://www.google.com/maps/search/?api=1&query="+str(interface.nodes[packet["fromId"]]["position"]["latitude"])+"%2C"+str(interface.nodes[packet["fromId"]]["position"]["longitude"])+">)"
-        if("hopLimit" in packet):
-            if("hopStart" in packet):
-                ret+=" `"+str(packet["hopStart"]-packet["hopLimit"])+"`/`"+str(packet["hopStart"])+"`"
-            else:
-                ret+=" `"+str(packet["hopLimit"])+"`"
-        if("viaMqtt" in packet):
-            if str(packet["viaMqtt"]) == "True":
-                ret+=" `MQTT`"
-        return ret
+    if short or long:
+        ret = f"`{short} "
+        if details:
+            ret += f"{packet['fromId']} "
+        ret += f"{long}`"
     else:
-        return "`"+str(packet["fromId"])+"`"
+        ret = f"`{packet['fromId']}`"
+
+    if details and hasPos:
+        ret += f" [map](<https://www.google.com/maps/search/?api=1&query={lat}%2C{lon}>)"
+
+    if "hopLimit" in packet:
+        if "hopStart" in packet:
+            ret += f" `{packet['hopStart'] - packet['hopLimit']}`/`{packet['hopStart']}`"
+        else:
+            ret += f" `{packet['hopLimit']}`"
+
+    if "viaMqtt" in packet and str(packet["viaMqtt"]) == "True":
+        ret += " `MQTT`"
+
+    return ret
     
 def send_msg(message,client,config):
     if config["use_discord"]:

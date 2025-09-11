@@ -1,7 +1,4 @@
 import cfg
-from meshtastic import util
-
-
 
 def getUserLong(interface,packet):
     ret=None
@@ -22,7 +19,7 @@ def getUserShort(interface,packet):
             if(node["user"]):
                 ret = str(node["user"]["shortName"])
             else:
-                ret = str(packet["fromId"])
+                ret = str(packet["fromId"][-4:])
     
     return ret
 

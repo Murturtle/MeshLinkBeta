@@ -3,7 +3,6 @@ import plugins.libdiscordutil as DiscordUtil
 import plugins.libinfo as LibInfo
 import plugins.libmesh as LibMesh
 import cfg
-import re
 
 commands = []
 
