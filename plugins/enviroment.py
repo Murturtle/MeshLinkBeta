@@ -63,6 +63,7 @@ class basicCommands(plugins.Base):
                 final += f"CO: {aqi_data['current']['us_aqi_carbon_monoxide']}\n"
                 final += f"O3: {aqi_data['current']['us_aqi_ozone']}\n"
                 final += f"SO2: {aqi_data['current']['us_aqi_sulphur_dioxide']}\n"
+                final += "(Your position)" if hasPos else "(Config position)" 
             else:
                 final = "Error fetching"
             logger.info(final)

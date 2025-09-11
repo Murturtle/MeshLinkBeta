@@ -20,7 +20,7 @@ class basicEvents(plugins.Base):
             logger.info("--------------------------------------------")
 
         final_message = ""
-
+        send_channel = 0
         if "decoded" not in packet:
             final_message += DiscordUtil.genUserName(interface, packet) + " > encrypted/failed"
             DiscordUtil.send_info(final_message, client, cfg.config)
@@ -35,6 +35,8 @@ class basicEvents(plugins.Base):
         portnum = packet["decoded"]["portnum"]
 
         if portnum == "TEXT_MESSAGE_APP":
+            if "channel" in packet:
+                send_channel = int(packet["channel"])
             final_message += DiscordUtil.genUserName(interface, packet, details=False)
             text = packet["decoded"]["text"]
 
@@ -51,7 +53,7 @@ class basicEvents(plugins.Base):
             if cfg.config["ping_on_messages"]:
                 final_message += " ||" + cfg.config["message_role"] + "||"
 
-            DiscordUtil.send_msg(final_message, client, cfg.config)
+            DiscordUtil.send_msg(final_message, client, cfg.config, send_channel)
             return
 
         if cfg.config["send_packets"]:
