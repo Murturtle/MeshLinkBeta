@@ -151,26 +151,29 @@ if cfg.config["use_discord"]:
         if message.author == client.user:
             return
         if message.content.startswith(cfg.config["discord_prefix"]+'send'):
-            if (message.channel.id in cfg.config["message_channel_ids"]):
+            if (message.channel.id in cfg.config["message_channel_ids"] or
+                message.channel.id in cfg.config.get("secondary_channel_message_ids", [])):
                 await message.channel.typing()
                 trunk_message = message.content[len(cfg.config["discord_prefix"]+"send"):]
                 if(cfg.config["include_username_prefix"]):
                     final_message = message.author.name+">"+ trunk_message
                 else:
                     final_message = trunk_message
-                
-                if(len(final_message) < cfg.config["max_message_length"] - 1):
-                    await message.reply(final_message)
-                    interface.sendText(final_message,channelIndex = cfg.config["send_channel_index"])
-                    logger.infodiscord(final_message)
-                    #DiscordUtil.send_msg("DISCORD: "+final_message,client,cfg.config)
-                else:
-                    await message.reply("(shortend) "+final_message[:cfg.config["max_message_length"]])
-                    interface.sendText(final_message,channelIndex = cfg.config["send_channel_index"])
-                    logger.infodiscord(final_message[:cfg.config["max_message_length"]])
-                    #DiscordUtil.send_msg("DISCORD: "+final_message,client,cfg.config)
-                
 
+                if message.channel.id in cfg.config.get("secondary_channel_message_ids", []):
+                    channel_index = cfg.config["secondary_channel_message_ids"].index(message.channel.id) + 1
+                else:
+                    channel_index = cfg.config["send_channel_index"]
+                
+                if len(final_message) < cfg.config["max_message_length"] - 1:
+                    await message.reply(final_message)
+                    interface.sendText(final_message, channelIndex=channel_index)
+                    logger.infodiscord(final_message)
+                else:
+                    short_msg = final_message[:cfg.config["max_message_length"]]
+                    await message.reply("(shortend) " + short_msg)
+                    interface.sendText(short_msg, channelIndex=channel_index)
+                    logger.infodiscord(short_msg)
                 #await message.delete()
                 
             else:
