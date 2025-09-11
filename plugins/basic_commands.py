@@ -27,40 +27,6 @@ class basicCommands(plugins.Base):
             return time.strftime('%H:%M:%S')
         LibCommand.simpleCommand().registerCommand("time", "Sends the current time", cmd_time)
 
-        # weather command
-        def cmd_weather(packet, interface, client, args):
-            weather_data_res = requests.get(
-                f"https://api.open-meteo.com/v1/forecast?latitude={cfg.config['weather_lat']}&longitude={cfg.config['weather_long']}"
-                "&hourly=temperature_2m,precipitation_probability&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timeformat=unixtime&timezone=auto"
-            )
-            weather_data = weather_data_res.json()
-            final = ""
-            if weather_data_res.ok:
-                for j in range(cfg.config["max_weather_hours"]):
-                    i = j + int(time.strftime('%H'))
-                    final += f"{i % 24} {round(weather_data['hourly']['temperature_2m'][i])}F {weather_data['hourly']['precipitation_probability'][i]}%\n"
-                final = final[:-1]
-            else:
-                final = "error fetching"
-            logger.info(final)
-            return final
-        LibCommand.simpleCommand().registerCommand("weather", "Gets the weather", cmd_weather)
-
-        # hf command
-        def cmd_hf(packet, interface, client, args):
-            final = ""
-            solar = requests.get("https://www.hamqsl.com/solarxml.php")
-            if solar.ok:
-                solarxml = xml.dom.minidom.parseString(solar.text)
-                for i in solarxml.getElementsByTagName("band"):
-                    final += f"{i.getAttribute('time')[0]}{i.getAttribute('name')} {i.childNodes[0].data}\n"
-                final = final[:-1]
-            else:
-                final = "error fetching"
-            logger.info(final)
-            return final
-        LibCommand.simpleCommand().registerCommand("hf", "Get HF radio conditions", cmd_hf)
-
         # mesh command
         #def cmd_mesh(packet, interface, client, args):
         #    final = "<- Mesh Stats ->"
