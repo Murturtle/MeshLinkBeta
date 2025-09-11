@@ -37,7 +37,7 @@ class basicCommands(plugins.Base):
         LibCommand.simpleCommand().registerCommand("weather", "Gets the weather", cmd_weather)
 
         # aqi command
-        def cmd_weather(packet, interface, client, args):
+        def cmd_aqi(packet, interface, client, args):
             final = ""
             aqi_data_res = requests.get(
                 f"https://air-quality-api.open-meteo.com/v1/air-quality?latitude={cfg.config['weather_lat']}&longitude={cfg.config['weather_long']}&current=us_aqi,us_aqi_pm2_5,us_aqi_pm10,us_aqi_nitrogen_dioxide,us_aqi_carbon_monoxide,us_aqi_ozone,us_aqi_sulphur_dioxide&timezone=auto&forecast_hours=1&past_hours=1&timeformat=unixtime"
@@ -56,7 +56,7 @@ class basicCommands(plugins.Base):
                 final = "Error fetching"
             logger.info(final)
             return final
-        LibCommand.simpleCommand().registerCommand("aqi", "Gets the AQI", cmd_weather)
+        LibCommand.simpleCommand().registerCommand("aqi", "Gets the AQI", cmd_aqi)
 
         # hf command
         def cmd_hf(packet, interface, client, args):
