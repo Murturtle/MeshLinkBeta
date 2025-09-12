@@ -10,7 +10,7 @@ use_discord: True
 max_message_length: 200 # max discord -> mesh message length and info message length
 info_channel_ids: [ 1234567890 ] # seperate using commas 
 message_channel_ids: [ 1234567890 ]
-secondary_channel_message_ids: [1234567890] # secondary channels to send and receive messages from. Each discord channel id in this list corresponds to a node's channel id 1-7.
+secondary_channel_message_ids: [ ] # secondary channels to send and receive messages from. Each discord channel id in this list corresponds to a node's channel id 1-7.
 token: "SDFjLKJVLREkjslRVJRLKjVLRKJLRVjrLKVJ" # discord bot token - DO NOT SHARE
 discord_prefix: "$" # discord prefix
 ignore_self: True # dont show your own node on discord
