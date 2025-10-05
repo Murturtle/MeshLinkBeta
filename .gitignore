@@ -4,6 +4,7 @@ plugins/**/__pycache__/
 plugins/gpt-config.yml
 meshlinkvenv/
 .venv/
+mise.toml
 plugins/gpt-config-example.yml
 plugins-disabled/gpt-config-example.yml
 plugins/gpt.py

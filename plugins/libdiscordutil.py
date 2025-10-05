@@ -24,7 +24,7 @@ def genUserName(interface, packet, details=True):
         ret += " `MQTT`"
 
     return ret
-    
+
 def send_msg(message,client,config,channel_id=0):
     if config["use_discord"]:
         if (client.is_ready()):

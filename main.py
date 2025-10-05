@@ -27,7 +27,7 @@ def handler(signum, frame):
     if(cfg.config["send_start_stop"]):
         interface.sendText("MeshLink is now stopping!",channelIndex = cfg.config["send_channel_index"])
     exit(1)
- 
+
 signal.signal(signal.SIGINT, handler)
 
 with open("./config.yml",'r') as file:
@@ -116,7 +116,7 @@ def onReceive(packet, interface):
             inst.onReceive(packet,interface,client)
     for cmd in LibCommand.commands:
         cmd.onReceive(packet,interface,client)
-    
+
 def onDisconnect(interface):
     for p in Base.plugins:
         inst = p()
@@ -133,7 +133,7 @@ def init_radio():
     logger.info("Connecting to node...")
     if (cfg.config["use_serial"]):
         interface = SerialInterface()
-        
+
     else:
         interface = TCPInterface(hostname=cfg.config["radio_ip"], connectNow=True)
 
@@ -141,12 +141,15 @@ init_radio()
 
 if cfg.config["use_discord"]:
     @client.event
-    async def on_ready():   
+    async def on_ready():
         logger.info("Logged in as {0.user} on Discord".format(client))
         #send_msg("ready")
 
     @client.event
     async def on_message(message):
+        if not cfg.config["permit_broadcast_of_discord_messages"]:
+            return
+
         global interface
         if message.author == client.user:
             return
@@ -164,7 +167,7 @@ if cfg.config["use_discord"]:
                     channel_index = cfg.config["secondary_channel_message_ids"].index(message.channel.id) + 1
                 else:
                     channel_index = cfg.config["send_channel_index"]
-                
+
                 if len(final_message) < cfg.config["max_message_length"] - 1:
                     await message.reply(final_message)
                     interface.sendText(final_message, channelIndex=channel_index)
@@ -175,7 +178,7 @@ if cfg.config["use_discord"]:
                     interface.sendText(short_msg, channelIndex=channel_index)
                     logger.infodiscord(short_msg)
                 #await message.delete()
-                
+
             else:
                 return
 
