@@ -8,7 +8,7 @@ check_for_updates: True # set to False to disable update checking
 ### DISCORD SETTINGS
 use_discord: True
 max_message_length: 200 # max discord -> mesh message length and info message length
-info_channel_ids: [ 1234567890 ] # seperate using commas 
+info_channel_ids: [ 1234567890 ] # separate using commas
 message_channel_ids: [ 1234567890 ]
 secondary_channel_message_ids: [ ] # secondary channels to send and receive messages from. Each discord channel id in this list corresponds to a node's channel id 1-7.
 token: "SDFjLKJVLREkjslRVJRLKjVLRKJLRVjrLKVJ" # discord bot token - DO NOT SHARE
@@ -17,13 +17,14 @@ ignore_self: True # dont show your own node on discord
 send_packets: True # show all data not just messages
 ping_on_messages: True # should the bot add the message_role to the message
 message_role: "@here" # the role on discord to ping on messages, if you dont want to ping everyone set to a custom role
+permit_broadcast_of_discord_messages: True # allow messages from discord to be transmitted to your selected channel
 send_mesh_commands_to_discord: True # send responses to mesh commands to discord
 
 ### MESH AND RADIO SETTINGS
 prefix: "$" # mesh command prefix
 use_serial: True # set to False if using tcp
 radio_ip: "192.168.1.100" # ip of the radio if using tcp
-send_channel_index: 0 # the index of the channel to send messages on 
+send_channel_index: 0 # the index of the channel to send messages on
 verbose_packets: False # should the full packet data be shown in the console
 send_start_stop: True # should the meshlink announcement be sent on connection and shut down
 include_username_prefix: True # include the username prefix in mesh messages from discord
