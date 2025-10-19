@@ -135,7 +135,25 @@ def init_radio():
         interface = SerialInterface()
 
     else:
-        interface = TCPInterface(hostname=cfg.config["radio_ip"], connectNow=True)
+#         interface = TCPInterface(hostname=cfg.config["radio_ip"], connectNow=True)
+
+        # Determine hostname and port with sensible defaults
+        host = cfg.config.get("radio_ip", "127.0.0.1")
+        port = 4403
+
+        # Allow "host:port" in radio_ip if provided
+        if isinstance(host, str) and ":" in host:
+            maybe_host, maybe_port = host.rsplit(":", 1)
+            if maybe_port.isdigit():
+                host = maybe_host
+                try:
+                    port = int(maybe_port)
+                except ValueError:
+                    port = 4403
+
+        logger.info(f"Connecting via TCPInterface to {host}:{port}…")
+        interface = TCPInterface(hostname=host, portNumber=port, connectNow=True)
+
 
 init_radio()
 
