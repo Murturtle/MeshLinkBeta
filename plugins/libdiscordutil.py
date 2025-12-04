@@ -6,7 +6,7 @@ def genUserName(interface, packet, details=True):
     long  = LibMesh.getUserLong(interface, packet) or ""
     lat, lon, hasPos = LibMesh.getPosition(interface, packet)
 
-    ret = f"`{short} " if short is not None else ""
+    ret = f"`{short} " if short is not None else "`"
 
     if details:
         if packet.get("fromId") is not None:

@@ -15,8 +15,6 @@ def getUserShort(interface,packet):
     node = getNode(interface,packet)
     if(node and "user" in node):
         ret = str(node["user"]["shortName"])
-    #     return ret
-    # ret = decimal_to_hex(packet["from"])[-4:]
     return ret
 
 def getNode(interface,packet):
