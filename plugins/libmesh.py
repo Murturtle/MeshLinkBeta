@@ -3,26 +3,21 @@ import cfg
 def getUserLong(interface,packet):
     ret=None
     node = getNode(interface,packet)
-    if(node):
-            if(node["user"]):
-                ret = str(node["user"]["longName"])
-            else:
-                ret = str(packet["fromId"])
-    
-    return ret
+    if(node and "user" in node):
+        ret = str(node["user"]["longName"])
+        return ret
 
+    ret = decimal_to_hex(packet["from"])
+    return ret
 
 def getUserShort(interface,packet):
     ret=None
     node = getNode(interface,packet)
-    if(node):
-            if(node["user"]):
-                ret = str(node["user"]["shortName"])
-            else:
-                ret = str(packet["fromId"][-4:])
-    
+    if(node and "user" in node):
+        ret = str(node["user"]["shortName"])
+    #     return ret
+    # ret = decimal_to_hex(packet["from"])[-4:]
     return ret
-
 
 def getNode(interface,packet):
     ret = None
@@ -30,6 +25,8 @@ def getNode(interface,packet):
         ret = interface.nodes[packet["fromId"]]
     return ret
 
+def decimal_to_hex(decimal_number):
+    return f"!{decimal_number:08x}"
 
 def getPosition(interface,packet):
     lat = None

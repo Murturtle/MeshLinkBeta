@@ -3,12 +3,14 @@ import plugins.libmesh as LibMesh
 
 def genUserName(interface, packet, details=True):
     short = LibMesh.getUserShort(interface, packet)
-    long = LibMesh.getUserLong(interface, packet)
+    long  = LibMesh.getUserLong(interface, packet) or ""
     lat, lon, hasPos = LibMesh.getPosition(interface, packet)
 
-    ret = f"`{short} "
+    ret = f"`{short} " if short is not None else ""
+
     if details:
-        ret += f"{packet['fromId']} "
+        if packet.get("fromId") is not None:
+            ret += f"{packet['fromId']} "
     ret += f"{long}`"
 
     if details and hasPos:
