@@ -9,7 +9,7 @@ def genUserName(interface, packet, details=True):
 
     #ret = f"**{long}** \n"
 
-    ret += f"Short: ({short}) " if short is not None else " "
+    ret = f"Short: ({short}) " if short is not None else " "
 
     if details:
         if packet.get("fromId") is not None:
