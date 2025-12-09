@@ -12,10 +12,10 @@ def genUserName(interface, packet, details=True):
     if details:
         if packet.get("fromId") is not None:
             ret += f"_{packet['fromId']}_ "
-    ret += f"({short}) " if short is not None else ""
+    ret += f"({short}) \n" if short is not None else ""
 
     if details and hasPos:
-        ret += f"[🗺️ map](https://www.google.com/maps/search/?api=1&query={lat}%2C{lon}) \n"
+        ret += f"`[🗺️ map](https://www.google.com/maps/search/?api=1&query={lat}%2C{lon})` \n"
 
     if "hopLimit" in packet:
         if "hopStart" in packet:
