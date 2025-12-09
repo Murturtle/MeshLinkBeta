@@ -40,7 +40,7 @@ class simpleCommand():
                         LibMesh.sendReply(reply, interface, packet)
 
                         if(cfg.config["send_mesh_commands_to_discord"]):
-                                DiscordUtil.send_msg("`fl0v said`: \n > "+reply, client, cfg.config)
+                                DiscordUtil.send_embed("fl0v reply", reply, client, cfg.config, color=0x6bc19b)
                     
     
     def executeCommand(self, packet, interface, client, args):

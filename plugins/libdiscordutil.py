@@ -20,9 +20,9 @@ def genUserName(interface, packet, details=True):
 
     if "hopLimit" in packet:
         if "hopStart" in packet:
-            ret += f"🐇 {packet['hopStart'] - packet['hopLimit']} of {packet['hopStart']} \n \n \n \n"
+            ret += f"🐇 {packet['hopStart'] - packet['hopLimit']} of {packet['hopStart']} \n"
         else:
-            ret += f"🐇 {packet['hopLimit']} \n \n \n"
+            ret += f"🐇 {packet['hopLimit']} \n"
 
     if "viaMqtt" in packet and str(packet["viaMqtt"]) == "True":
         ret += " `MQTT`"
