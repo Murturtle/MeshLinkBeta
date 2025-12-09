@@ -37,7 +37,7 @@ class basicEvents(plugins.Base):
         if portnum == "TEXT_MESSAGE_APP":
             if "channel" in packet:
                 send_channel = int(packet["channel"])
-            final_message += DiscordUtil.genUserName(interface, packet, details=False)
+            username = DiscordUtil.genUserName(interface, packet, details=False)
             text = packet["decoded"]["text"]
 
             if packet.get("from") is not None:
@@ -46,14 +46,14 @@ class basicEvents(plugins.Base):
                 logger.infogreen("Unknown ID> " + text)
 
             if text.lower() == "meshlink":
-                LibMesh.sendReply("MeshLink is running on this node - rev " + str(cfg.config["rev"]) + "\n\nuse " + cfg.config["prefix"] + "info for a list of commands", interface, packet)
+                LibMesh.sendReply("fl0v is running " + str(cfg.config["rev"]) + "\n\nuse " + cfg.config["prefix"] + "info for a list of commands", interface, packet)
 
-            final_message += " > " + text
-
+            title = f"Message from {username}"
+            description = text
             if cfg.config["ping_on_messages"]:
-                final_message += " ||" + cfg.config["message_role"] + "||"
+                description += f"\n\n{cfg.config['message_role']}"
 
-            DiscordUtil.send_msg(final_message, client, cfg.config, send_channel)
+            DiscordUtil.send_embed(title, description, client, cfg.config, send_channel)
             return
 
         if cfg.config["send_packets"]:
@@ -76,10 +76,10 @@ class basicEvents(plugins.Base):
         logger.infogreen("Node connected")
 
 
-        DiscordUtil.send_msg("MeshLink is now running - rev "+str(cfg.config["rev"]), client, cfg.config)
+        DiscordUtil.send_msg("fl0v is running "+str(cfg.config["rev"]), client, cfg.config)
         if(cfg.config["send_start_stop"]):
-            interface.sendText("MeshLink is now running - rev "+str(cfg.config["rev"])+"\n\nuse "+cfg.config["prefix"]+"info for a list of commands",channelIndex = cfg.config["send_channel_index"])
+            interface.sendText("fl0v is running "+str(cfg.config["rev"])+"\n\nuse "+cfg.config["prefix"]+"info for a list of commands",channelIndex = cfg.config["send_channel_index"])
 
     def onDisconnect(self,interface,client):
         logger.warn("Connection to node has been lost - attemping to reconnect")
-        DiscordUtil.send_msg("# Connection to node has been lost",client, cfg.config)
+        # DiscordUtil.send_msg("# Connection to node has been lost",client, cfg.config)
