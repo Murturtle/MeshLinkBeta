@@ -7,21 +7,22 @@ def genUserName(interface, packet, details=True):
     long  = LibMesh.getUserLong(interface, packet) or ""
     lat, lon, hasPos = LibMesh.getPosition(interface, packet)
 
-    ret = f"**{long}** \n"
+    #ret = f"**{long}** \n"
+
+    ret += f"Short: ({short}) " if short is not None else " "
 
     if details:
         if packet.get("fromId") is not None:
-            ret += f"_{packet['fromId']}_ "
-    ret += f"({short}) \n" if short is not None else ""
+            ret += f"_ID: {packet['fromId']}_ \n"
 
     if details and hasPos:
-        ret += f" [map](<https://www.google.com/maps/search/?api=1&query={lat}%2C{lon}>) \n"
+        ret += f" [map](<https://www.google.com/maps/search/?api=1&query={lat}%2C{lon}>) "
 
     if "hopLimit" in packet:
         if "hopStart" in packet:
-            ret += f"🐇 {packet['hopStart'] - packet['hopLimit']} of {packet['hopStart']} \n ____________"
+            ret += f"🐇 {packet['hopStart'] - packet['hopLimit']} of {packet['hopStart']} \n \n \n \n"
         else:
-            ret += f"🐇 {packet['hopLimit']} \n ____________"
+            ret += f"🐇 {packet['hopLimit']} \n \n \n"
 
     if "viaMqtt" in packet and str(packet["viaMqtt"]) == "True":
         ret += " `MQTT`"
@@ -38,7 +39,7 @@ def send_msg(message,client,config,channel_id=0):
                 for i in config["message_channel_ids"]:
                     asyncio.run_coroutine_threadsafe(client.get_channel(i).send(message),client.loop)
 
-def send_embed(title, description, client, config, channel_id=0, footer=None, color=0x0000FF):
+def send_embed(title, description, client, config, channel_id=0, footer=None, color=0x3c90ba):
     if config["use_discord"]:
         if (client.is_ready()):
             embed = discord.Embed(title=title, description=description, color=color)
