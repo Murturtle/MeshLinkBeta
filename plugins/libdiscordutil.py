@@ -15,13 +15,13 @@ def genUserName(interface, packet, details=True):
     ret += f"({short}) \n" if short is not None else ""
 
     if details and hasPos:
-        ret += f"`[🗺️ map](https://www.google.com/maps/search/?api=1&query={lat}%2C{lon})` \n"
+        ret += f" [map](<https://www.google.com/maps/search/?api=1&query={lat}%2C{lon}>) \n"
 
     if "hopLimit" in packet:
         if "hopStart" in packet:
-            ret += f"🐇 {packet['hopStart'] - packet['hopLimit']} of {packet['hopStart']}"
+            ret += f"🐇 {packet['hopStart'] - packet['hopLimit']} of {packet['hopStart']} \n ____________"
         else:
-            ret += f"🐇 {packet['hopLimit']}"
+            ret += f"🐇 {packet['hopLimit']} \n ____________"
 
     if "viaMqtt" in packet and str(packet["viaMqtt"]) == "True":
         ret += " `MQTT`"
