@@ -7,21 +7,21 @@ def genUserName(interface, packet, details=True):
     long  = LibMesh.getUserLong(interface, packet) or ""
     lat, lon, hasPos = LibMesh.getPosition(interface, packet)
 
-    ret = f"{short} " if short is not None else ""
+    ret = f"**{long}** \n"
 
     if details:
         if packet.get("fromId") is not None:
-            ret += f"{packet['fromId']} "
-    ret += f"{long} \n"
+            ret += f"_{packet['fromId']}_ "
+    ret += f"({short}) " if short is not None else ""
 
     if details and hasPos:
-        ret += f" [🗺️ map](https://www.google.com/maps/search/?api=1&query={lat}%2C{lon})"
+        ret += f"[🗺️ map](https://www.google.com/maps/search/?api=1&query={lat}%2C{lon}) \n"
 
     if "hopLimit" in packet:
         if "hopStart" in packet:
-            ret += f"\n🐇 {packet['hopStart'] - packet['hopLimit']} of {packet['hopStart']}"
+            ret += f"🐇 {packet['hopStart'] - packet['hopLimit']} of {packet['hopStart']}"
         else:
-            ret += f"\n🐇 {packet['hopLimit']}"
+            ret += f"🐇 {packet['hopLimit']}"
 
     if "viaMqtt" in packet and str(packet["viaMqtt"]) == "True":
         ret += " `MQTT`"
