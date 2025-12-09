@@ -15,7 +15,7 @@ def genUserName(interface, packet, details=True):
     ret += f"{long} \n"
 
     if details and hasPos:
-        ret += f" [🗺️ map](<https://www.google.com/maps/search/?api=1&query={lat}%2C{lon}>)"
+        ret += f" [🗺️ map](https://www.google.com/maps/search/?api=1&query={lat}%2C{lon})"
 
     if "hopLimit" in packet:
         if "hopStart" in packet:
