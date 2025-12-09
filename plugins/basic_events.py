@@ -22,7 +22,7 @@ class basicEvents(plugins.Base):
         final_message = ""
         send_channel = 0
         if "decoded" not in packet:
-            final_message += DiscordUtil.genUserName(interface, packet) + " > encrypted/failed"
+            final_message += DiscordUtil.genUserName(interface, packet) + ": encrypted message"
             DiscordUtil.send_info(final_message, client, cfg.config)
 
             if cfg.config["verbose_packets"]:
@@ -48,7 +48,7 @@ class basicEvents(plugins.Base):
             if text.lower() == "meshlink":
                 LibMesh.sendReply("fl0v is running " + str(cfg.config["rev"]) + "\n\nuse " + cfg.config["prefix"] + "info for a list of commands", interface, packet)
 
-            title = f"Message from {username}"
+            title = f"From: {username}"
             description = text
             if cfg.config["ping_on_messages"]:
                 description += f"\n\n{cfg.config['message_role']}"
