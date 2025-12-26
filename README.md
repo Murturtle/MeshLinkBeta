@@ -35,6 +35,44 @@ send (message)
  12. configure config.yml to your liking
  14. `python main.py`
 
+## Auto-Start with Cron
+
+A monitoring script (`check_meshlink.sh`) is included to automatically start MeshLink if it stops running.
+
+### Setup
+
+1. Make the script executable:
+   ```bash
+   chmod +x check_meshlink.sh
+   ```
+
+2. Create the cron log file:
+   ```bash
+   touch meshlink_cron.log
+   chmod 644 meshlink_cron.log
+   ```
+
+3. Add a cron job (check every 5 minutes):
+   ```bash
+   crontab -e
+   ```
+   Add this line (adjust path as needed):
+   ```
+   */5 * * * * /path/to/MeshLinkBeta/check_meshlink.sh >> /path/to/MeshLinkBeta/meshlink_cron.log 2>&1
+   ```
+
+### Requirements
+- Virtual environment must exist at `MeshLinkBeta/venv/`
+- The cron user must have:
+  - Execute permission on `check_meshlink.sh` (`chmod +x`)
+  - Write permission on `meshlink_cron.log` (`chmod 644`)
+  - Read/execute access to the MeshLinkBeta directory
+
+### Troubleshooting
+- Check cron log: `tail -f meshlink_cron.log`
+- Test manually: `./check_meshlink.sh`
+- Verify cron is set: `crontab -l`
+
 ## Updating
 You may receive a log in the console like this:
 `[INFO] New MeshLink update ready https://github.com/Murturtle/MeshLinkBeta`
