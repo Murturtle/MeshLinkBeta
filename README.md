@@ -13,6 +13,7 @@
  - Save position as waypoint with timestamp
  - ChatGPT with **optional** plugin
  - Help command with multi page support
+ - **Scheduled messages** - Automatically send messages at configured intervals (see [SCHEDULER_README.md](SCHEDULER_README.md))
 
 ## Commands
 **prefix + command**
