@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeshLink Node Tracking</title>
+    <link rel="stylesheet" href="css/nodes.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌐 MeshLink Node Tracking</h1>
+            <div class="stats-bar">
+                <div class="stat">
+                    <span class="stat-label">Total Nodes:</span>
+                    <span id="stat-total-nodes" class="stat-value">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Active (1h):</span>
+                    <span id="stat-active-nodes" class="stat-value">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Total Packets:</span>
+                    <span id="stat-total-packets" class="stat-value">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Active Links:</span>
+                    <span id="stat-active-links" class="stat-value">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Avg Link Quality:</span>
+                    <span id="stat-avg-quality" class="stat-value">0%</span>
+                </div>
+            </div>
+        </header>
+
+        <nav class="tab-nav">
+            <button class="tab-btn active" data-tab="nodes">📋 Node List</button>
+            <button class="tab-btn" data-tab="topology">🔗 Network Topology</button>
+            <button class="tab-btn" data-tab="map">🗺️ Map View</button>
+        </nav>
+
+        <!-- Nodes Tab -->
+        <div id="nodes-tab" class="tab-content active">
+            <div class="controls">
+                <input type="text" id="search" placeholder="🔍 Search nodes..." class="search-box">
+                <select id="filter-battery" class="filter-select">
+                    <option value="">All Battery Levels</option>
+                    <option value="high">High (>60%)</option>
+                    <option value="medium">Medium (20-60%)</option>
+                    <option value="low">Low (<20%)</option>
+                </select>
+                <select id="sort-by" class="filter-select">
+                    <option value="lastSeen">Last Seen</option>
+                    <option value="name">Name</option>
+                    <option value="battery">Battery</option>
+                    <option value="packets">Packet Count</option>
+                </select>
+                <button id="refresh-btn" class="refresh-btn">🔄 Refresh</button>
+            </div>
+
+            <div class="table-container">
+                <table id="nodes-table">
+                    <thead>
+                        <tr>
+                            <th>Node</th>
+                            <th>Status</th>
+                            <th>Battery</th>
+                            <th>Location</th>
+                            <th>Last Seen</th>
+                            <th>Packets</th>
+                            <th>Hardware</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="nodes-tbody">
+                        <tr>
+                            <td colspan="8" class="loading">Loading nodes...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Topology Tab -->
+        <div id="topology-tab" class="tab-content">
+            <div class="topology-controls">
+                <label>
+                    <input type="checkbox" id="show-inactive" checked>
+                    Show Inactive Links
+                </label>
+                <label>
+                    Link Quality Filter: <span id="quality-value">0</span>%
+                    <input type="range" id="quality-filter" min="0" max="100" value="0">
+                </label>
+                <button id="refresh-topology-btn" class="refresh-btn">🔄 Refresh Topology</button>
+            </div>
+            <div id="topology-graph" class="topology-container">
+                <p class="info-message">Network topology visualization will appear here.<br>
+                Currently showing text-based topology information.</p>
+                <div id="topology-info"></div>
+            </div>
+        </div>
+
+        <!-- Map Tab -->
+        <div id="map-tab" class="tab-content">
+            <div id="map-container" class="map-container">
+                <p class="info-message">Map view will display node locations here.<br>
+                Requires nodes with GPS position data.</p>
+                <div id="map-info"></div>
+            </div>
+        </div>
+
+        <!-- Node Details Modal -->
+        <div id="node-modal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2 id="modal-title">Node Details</h2>
+                <div id="modal-body" class="modal-body">
+                    <!-- Node details will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/nodes.js"></script>
+</body>
+</html>
