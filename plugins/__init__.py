@@ -30,11 +30,14 @@ def load_module(path):
 path = os.path.abspath(__file__)
 dirpath = os.path.dirname(path)
 
+# Get PID for logging
+_pid = os.getpid()
+
 for fname in os.listdir(dirpath):
     # Load only "real modules"
     if not fname.startswith('.') and ( not fname.startswith('__')  ) and fname.endswith('.py') and not fname.startswith("lib"):
         try:
             load_module(os.path.join(dirpath, fname))
-            print("[INFO] Loaded file "+fname)
+            print(f"[PID:{_pid}] [INFO] Loaded file {fname}")
         except Exception:
             traceback.print_exc()

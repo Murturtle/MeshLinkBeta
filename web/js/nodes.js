@@ -414,6 +414,7 @@ async function showNodeDetails(nodeId) {
                         <tr>
                             <th>Time</th>
                             <th>Type</th>
+                            <th>Relay Node</th>
                             <th>Hops</th>
                             <th>SNR</th>
                         </tr>
@@ -423,6 +424,7 @@ async function showNodeDetails(nodeId) {
                             <tr>
                                 <td>${formatTime(p.received_at_utc)}</td>
                                 <td>${p.packet_type || 'Unknown'}</td>
+                                <td>${p.relay_node_id ? (p.relay_node_name || p.relay_node_id) : 'Direct'}</td>
                                 <td>${p.hops_away !== null ? p.hops_away : 'N/A'}</td>
                                 <td>${p.rx_snr !== null ? p.rx_snr.toFixed(1) + ' dB' : 'N/A'}</td>
                             </tr>
