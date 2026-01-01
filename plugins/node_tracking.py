@@ -18,20 +18,23 @@ import time
 class NodeTracking(plugins.Base):
     """Main plugin for node tracking and network topology"""
     
+    # Class variables shared across all instances
+    _db = None
+    _exporter = None
+    _config = None
+    _last_export_time = 0
+    _export_interval = 60  # Export every 60 seconds
+    _topology_cleanup_timer = None
+    
     def __init__(self):
-        self.db = None
-        self.exporter = None
-        self.config = None
-        self.last_export_time = 0
-        self.export_interval = 60  # Export every 60 seconds
-        self.topology_cleanup_timer = None
+        pass
     
     def start(self):
         """Initialize the node tracking system"""
         logger.info("Loading node tracking plugin")
         
         # Load configuration
-        self.config = cfg.config.get('node_tracking', {
+        NodeTracking._config = cfg.config.get('node_tracking', {
             'enabled': True,
             'max_packets_per_node': 1000,
             'database_path': './nodes.db',
@@ -57,28 +60,28 @@ class NodeTracking(plugins.Base):
             }
         })
         
-        if not self.config.get('enabled', True):
+        if not NodeTracking._config.get('enabled', True):
             logger.info("Node tracking is disabled in config")
             return
         
         # Initialize database
         try:
-            db_path = self.config.get('database_path', './nodes.db')
-            self.db = NodeDatabase(db_path)
-            self.exporter = NodeExporter(self.db)
+            db_path = NodeTracking._config.get('database_path', './nodes.db')
+            NodeTracking._db = NodeDatabase(db_path)
+            NodeTracking._exporter = NodeExporter(NodeTracking._db)
             logger.infogreen(f"Node tracking database initialized at {db_path}")
         except Exception as e:
             logger.warn(f"Failed to initialize node tracking: {e}")
-            self.config['enabled'] = False
+            NodeTracking._config['enabled'] = False
             return
         
         # Start topology cleanup timer if enabled
-        if self.config.get('topology', {}).get('enabled', True):
+        if NodeTracking._config.get('topology', {}).get('enabled', True):
             self._start_topology_cleanup()
     
     def onReceive(self, packet, interface, client):
         """Handle incoming packets"""
-        if not self.config.get('enabled', True) or not self.db:
+        if not NodeTracking._config or not NodeTracking._config.get('enabled', True) or not NodeTracking._db:
             return
         
         try:
@@ -92,29 +95,29 @@ class NodeTracking(plugins.Base):
             
             # Update node in database
             if node_data:
-                self.db.upsert_node(node_data)
+                NodeTracking._db.upsert_node(node_data)
             
             # Check if we should track this packet type
             portnum = packet.get('decoded', {}).get('portnum', '')
-            track_types = self.config.get('track_packet_types', [])
+            track_types = NodeTracking._config.get('track_packet_types', [])
             
             if portnum in track_types or not track_types:
                 # Extract and store packet data
                 packet_data = self._extract_packet_data(packet, interface)
                 if packet_data:
-                    max_packets = self.config.get('max_packets_per_node', 1000)
-                    self.db.insert_packet(packet_data, max_packets)
+                    max_packets = NodeTracking._config.get('max_packets_per_node', 1000)
+                    NodeTracking._db.insert_packet(packet_data, max_packets)
             
             # Update topology if enabled
-            if self.config.get('topology', {}).get('enabled', True):
+            if NodeTracking._config.get('topology', {}).get('enabled', True):
                 self._update_topology(packet, interface)
             
             # Auto-export if enabled
-            if self.config.get('auto_export_json', False):
+            if NodeTracking._config.get('auto_export_json', False):
                 current_time = time.time()
-                if current_time - self.last_export_time > self.export_interval:
+                if current_time - NodeTracking._last_export_time > NodeTracking._export_interval:
                     self._export_data()
-                    self.last_export_time = current_time
+                    NodeTracking._last_export_time = current_time
                     
         except Exception as e:
             logger.warn(f"Error in node tracking onReceive: {e}")
@@ -268,7 +271,7 @@ class NodeTracking(plugins.Base):
                 my_node_id = interface.getMyNodeInfo().get('user', {}).get('id')
                 if my_node_id and source_id != my_node_id:
                     # Update link from source to us
-                    self.db.update_topology(
+                    NodeTracking._db.update_topology(
                         source_id,
                         my_node_id,
                         snr=packet.get('rxSnr'),
@@ -287,9 +290,9 @@ class NodeTracking(plugins.Base):
     def _export_data(self):
         """Export data to JSON"""
         try:
-            if self.exporter:
-                json_path = self.config.get('json_export_path', './nodes.json')
-                self.exporter.export_nodes_to_json(json_path, include_topology=True)
+            if NodeTracking._exporter:
+                json_path = NodeTracking._config.get('json_export_path', './nodes.json')
+                NodeTracking._exporter.export_nodes_to_json(json_path, include_topology=True)
         except Exception as e:
             logger.warn(f"Error exporting data: {e}")
     
@@ -297,23 +300,23 @@ class NodeTracking(plugins.Base):
         """Start periodic topology cleanup timer"""
         def cleanup():
             try:
-                timeout_minutes = self.config.get('topology', {}).get('link_timeout_minutes', 60)
-                self.db.mark_inactive_links(timeout_minutes)
+                timeout_minutes = NodeTracking._config.get('topology', {}).get('link_timeout_minutes', 60)
+                NodeTracking._db.mark_inactive_links(timeout_minutes)
             except Exception as e:
                 logger.warn(f"Error in topology cleanup: {e}")
             
             # Schedule next cleanup
-            if self.config.get('enabled', True):
-                self.topology_cleanup_timer = threading.Timer(300, cleanup)  # Every 5 minutes
-                self.topology_cleanup_timer.daemon = True
-                self.topology_cleanup_timer.start()
+            if NodeTracking._config.get('enabled', True):
+                NodeTracking._topology_cleanup_timer = threading.Timer(300, cleanup)  # Every 5 minutes
+                NodeTracking._topology_cleanup_timer.daemon = True
+                NodeTracking._topology_cleanup_timer.start()
         
         # Start initial cleanup
         cleanup()
     
     def onConnect(self, interface, client):
         """Handle connection to node"""
-        if not self.config.get('enabled', True):
+        if not NodeTracking._config or not NodeTracking._config.get('enabled', True):
             return
         
         logger.info("Node tracking ready - will capture all packets")
@@ -323,12 +326,12 @@ class NodeTracking(plugins.Base):
     
     def onDisconnect(self, interface, client):
         """Handle disconnection from node"""
-        if not self.config.get('enabled', True):
+        if not NodeTracking._config or not NodeTracking._config.get('enabled', True):
             return
         
         # Export data before shutdown
         self._export_data()
         
         # Cancel cleanup timer
-        if self.topology_cleanup_timer:
-            self.topology_cleanup_timer.cancel()
+        if NodeTracking._topology_cleanup_timer:
+            NodeTracking._topology_cleanup_timer.cancel()
