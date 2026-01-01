@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MeshLink Node Tracking</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="css/nodes.css">
 </head>
 <body>
@@ -105,9 +106,7 @@
         <!-- Map Tab -->
         <div id="map-tab" class="tab-content">
             <div id="map-container" class="map-container">
-                <p class="info-message">Map view will display node locations here.<br>
-                Requires nodes with GPS position data.</p>
-                <div id="map-info"></div>
+                <div id="map" class="leaflet-map"></div>
             </div>
         </div>
 
@@ -123,6 +122,7 @@
         </div>
     </div>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="js/nodes.js"></script>
 </body>
 </html>

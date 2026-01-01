@@ -11,6 +11,8 @@ let currentFilter = {
     battery: '',
     sortBy: 'lastSeen'
 };
+let map = null;
+let mapMarkers = [];
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -491,29 +493,78 @@ function renderTopology() {
     }).join('');
 }
 
+// Initialize Map
+function initializeMap() {
+    if (!map) {
+        // Create map centered at a default location
+        map = L.map('map').setView([0, 0], 2);
+
+        // Add OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19
+        }).addTo(map);
+    }
+}
+
 // Load Map
 function loadMap() {
-    const container = document.getElementById('map-info');
-    
+    // Initialize the map if not already done
+    initializeMap();
+
+    // Clear existing markers
+    mapMarkers.forEach(marker => marker.remove());
+    mapMarkers = [];
+
+    // Filter nodes with GPS coordinates
     const nodesWithGPS = allNodes.filter(n => n.latitude && n.longitude);
-    
+
     if (nodesWithGPS.length === 0) {
-        container.innerHTML = '<p class="info-message">No nodes with GPS data available</p>';
+        // Center map at default location if no nodes
+        map.setView([0, 0], 2);
         return;
     }
-    
-    container.innerHTML = `
-        <h3>Nodes with GPS (${nodesWithGPS.length})</h3>
-        ${nodesWithGPS.map(node => `
-            <div style="padding: 10px; border-bottom: 1px solid #e9ecef;">
+
+    // Create markers for each node
+    nodesWithGPS.forEach(node => {
+        const marker = L.marker([node.latitude, node.longitude]).addTo(map);
+
+        // Create popup content
+        const popupContent = `
+            <div style="min-width: 200px;">
                 <strong>${escapeHtml(node.long_name || node.short_name || node.node_id)}</strong><br>
-                📍 ${node.latitude.toFixed(6)}, ${node.longitude.toFixed(6)}
-                <a href="https://www.google.com/maps/search/?api=1&query=${node.latitude},${node.longitude}" target="_blank">
-                    View Map
-                </a>
+                <small style="color: #6c757d; font-family: monospace;">${escapeHtml(node.node_id)}</small><br><br>
+                ${getStatusBadge(node)}<br><br>
+                ${node.battery_level ? `🔋 Battery: ${node.battery_level}%<br>` : ''}
+                📍 ${node.latitude.toFixed(6)}, ${node.longitude.toFixed(6)}<br>
+                ${node.altitude ? `⛰️ Altitude: ${node.altitude.toFixed(0)}m<br>` : ''}
+                📦 Packets: ${node.total_packets_received || 0}<br>
+                🕐 ${formatTime(node.last_seen_utc)}<br><br>
+                <button onclick="showNodeDetails('${node.node_id}')" style="padding: 4px 8px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    View Details
+                </button>
             </div>
-        `).join('')}
-    `;
+        `;
+
+        marker.bindPopup(popupContent);
+        mapMarkers.push(marker);
+    });
+
+    // Calculate bounds to fit all markers
+    if (nodesWithGPS.length === 1) {
+        // Single node - center on it with a reasonable zoom
+        const node = nodesWithGPS[0];
+        map.setView([node.latitude, node.longitude], 13);
+    } else {
+        // Multiple nodes - fit bounds to show all
+        const bounds = L.latLngBounds(nodesWithGPS.map(n => [n.latitude, n.longitude]));
+        map.fitBounds(bounds, { padding: [50, 50] });
+    }
+
+    // Force map to refresh its size (fixes rendering issues)
+    setTimeout(() => {
+        map.invalidateSize();
+    }, 100);
 }
 
 // Utility: Escape HTML
