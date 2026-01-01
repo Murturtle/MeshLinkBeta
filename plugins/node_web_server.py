@@ -6,6 +6,7 @@ Provides REST API and web interface for viewing node tracking data.
 import plugins
 import cfg
 import json
+import os
 from datetime import datetime
 import plugins.liblogger as logger
 from plugins.libnode_db import NodeDatabase
@@ -57,8 +58,12 @@ class NodeWebServer(plugins.Base):
             logger.warn(f"Failed to connect to node database: {e}")
             return
         
+        # Get absolute path to web directory
+        # Working directory is MeshLinkBeta/, so web/ is directly accessible
+        web_dir = os.path.join(os.getcwd(), 'web')
+        
         # Create Flask app
-        self.app = Flask(__name__, static_folder='../web', static_url_path='')
+        self.app = Flask(__name__, static_folder=web_dir, static_url_path='')
         CORS(self.app)  # Enable CORS for API access
         
         # Define routes
@@ -66,8 +71,9 @@ class NodeWebServer(plugins.Base):
         def index():
             """Serve main page"""
             try:
-                return send_from_directory('../web', 'nodes.html')
-            except:
+                return send_from_directory(web_dir, 'nodes.html')
+            except Exception as e:
+                logger.warn(f"Failed to serve nodes.html: {e}")
                 return "<h1>Node Tracking</h1><p>Web interface not yet available. Use API endpoints.</p>"
         
         @self.app.route('/api/nodes', methods=['GET'])
