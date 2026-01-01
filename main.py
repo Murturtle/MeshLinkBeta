@@ -70,9 +70,12 @@ for i in cfg.config:
     if i not in config_options:
         logger.infoimportant("Config option "+i+" might not needed anymore")
 
+# Create plugin instances once and store them
+plugin_instances = []
 for plugin in Base.plugins:
     inst = plugin()
     inst.start()
+    plugin_instances.append(inst)
 
 if(cfg.config["check_for_updates"]):
     oversion = requests.get(update_check_url)
@@ -104,22 +107,19 @@ else:
     client = None
 
 def onConnection(interface, topic=pub.AUTO_TOPIC):
-    for p in Base.plugins:
-        inst = p()
+    for inst in plugin_instances:
         if hasattr(inst, "onConnect") and callable(inst.onConnect):
             inst.onConnect(interface,client)
 
 def onReceive(packet, interface):
-    for p in Base.plugins:
-        inst = p()
+    for inst in plugin_instances:
         if hasattr(inst, "onReceive") and callable(inst.onReceive):
             inst.onReceive(packet,interface,client)
     for cmd in LibCommand.commands:
         cmd.onReceive(packet,interface,client)
 
 def onDisconnect(interface):
-    for p in Base.plugins:
-        inst = p()
+    for inst in plugin_instances:
         if hasattr(inst, "onDisconnect") and callable(inst.onDisconnect):
             inst.onDisconnect(interface,client)
     init_radio()
