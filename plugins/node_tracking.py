@@ -252,19 +252,34 @@ class NodeTracking(plugins.Base):
             return None
     
     def _serialize_packet(self, packet: Dict[str, Any]) -> str:
-        """Serialize packet to JSON, handling bytes objects"""
+        """Serialize packet to JSON, handling bytes and protobuf objects"""
         try:
-            def convert_bytes(obj):
-                """Convert bytes to base64 string for JSON serialization"""
+            def convert_to_serializable(obj):
+                """Convert non-JSON-serializable objects for storage"""
+                # Handle bytes
                 if isinstance(obj, bytes):
                     return base64.b64encode(obj).decode('utf-8')
+                
+                # Handle dictionaries recursively
                 elif isinstance(obj, dict):
-                    return {k: convert_bytes(v) for k, v in obj.items()}
+                    return {k: convert_to_serializable(v) for k, v in obj.items()}
+                
+                # Handle lists recursively
                 elif isinstance(obj, list):
-                    return [convert_bytes(item) for item in obj]
+                    return [convert_to_serializable(item) for item in obj]
+                
+                # Handle protobuf objects and other complex types
+                elif hasattr(obj, '__class__') and obj.__class__.__module__ not in ['builtins', '__builtin__']:
+                    # Try to convert to string representation
+                    try:
+                        return str(obj)
+                    except:
+                        return f"<{obj.__class__.__name__}>"
+                
+                # Return primitive types as-is
                 return obj
             
-            cleaned_packet = convert_bytes(packet)
+            cleaned_packet = convert_to_serializable(packet)
             return json.dumps(cleaned_packet)
         except Exception as e:
             logger.warn(f"Error serializing packet: {e}")
