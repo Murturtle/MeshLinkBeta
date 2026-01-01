@@ -6,6 +6,7 @@ Captures and stores information about all nodes and packets received on the mesh
 import plugins
 import cfg
 import json
+import base64
 from datetime import datetime
 from typing import Optional, Dict, Any
 import plugins.liblogger as logger
@@ -206,7 +207,7 @@ class NodeTracking(plugins.Base):
                 'via_mqtt': packet.get('viaMqtt', False),
                 'rx_snr': packet.get('rxSnr'),
                 'rx_rssi': packet.get('rxRssi'),
-                'raw_packet': json.dumps(packet)
+                'raw_packet': self._serialize_packet(packet)
             }
             
             # Calculate hops away
@@ -249,6 +250,25 @@ class NodeTracking(plugins.Base):
         except Exception as e:
             logger.warn(f"Error extracting packet data: {e}")
             return None
+    
+    def _serialize_packet(self, packet: Dict[str, Any]) -> str:
+        """Serialize packet to JSON, handling bytes objects"""
+        try:
+            def convert_bytes(obj):
+                """Convert bytes to base64 string for JSON serialization"""
+                if isinstance(obj, bytes):
+                    return base64.b64encode(obj).decode('utf-8')
+                elif isinstance(obj, dict):
+                    return {k: convert_bytes(v) for k, v in obj.items()}
+                elif isinstance(obj, list):
+                    return [convert_bytes(item) for item in obj]
+                return obj
+            
+            cleaned_packet = convert_bytes(packet)
+            return json.dumps(cleaned_packet)
+        except Exception as e:
+            logger.warn(f"Error serializing packet: {e}")
+            return "{}"
     
     def _update_topology(self, packet: Dict[str, Any], interface):
         """Update network topology based on packet"""

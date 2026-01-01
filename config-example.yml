@@ -33,3 +33,45 @@ include_username_prefix: True # include the username prefix in mesh messages fro
 weather_lat: "45.516022" # latitude for for weather plugin
 weather_long: "-122.681427"
 max_weather_hours: 8 # how many hours ahead to send weather info for
+
+### SCHEDULED MESSAGES PLUGIN
+# The scheduled messages plugin sends automated messages at configured intervals
+# Configuration is in scheduled_messages.json (see scheduled_messages-example.json)
+# No config.yml settings needed - all configuration is in the JSON file
+
+### NODE TRACKING PLUGIN
+# Tracks all nodes and packets received on the mesh network
+# Stores data in SQLite database and exports to JSON for web visualization
+node_tracking:
+  enabled: true                           # Enable/disable node tracking
+  max_packets_per_node: 1000             # Maximum packet history per node (older packets auto-deleted)
+  database_path: "./nodes.db"            # Path to SQLite database file
+  json_export_path: "./nodes.json"       # Path to JSON export file
+  auto_export_json: true                 # Automatically export to JSON periodically
+  
+  # Web server configuration (for viewing node data in browser)
+  web_server:
+    enabled: false                        # Enable web server (requires Flask)
+    host: "0.0.0.0"                      # Host to bind to (0.0.0.0 = all interfaces)
+    port: 8080                           # Port for web interface
+  
+  # Packet types to track (leave empty to track all types)
+  track_packet_types:
+    - "TEXT_MESSAGE_APP"                 # Text messages
+    - "POSITION_APP"                     # GPS location updates
+    - "NODEINFO_APP"                     # Node information updates
+    - "TELEMETRY_APP"                    # Battery, temperature, sensor data
+    - "ROUTING_APP"                      # Routing information
+  
+  # Network topology tracking settings
+  topology:
+    enabled: true                         # Enable topology tracking (which nodes can hear each other)
+    link_timeout_minutes: 60             # Mark links inactive after this many minutes without packets
+    min_packets_for_link: 3              # Minimum packets required to establish valid link
+    calculate_link_quality: true          # Calculate link quality scores based on SNR/RSSI
+  
+  # Battery monitoring alerts (optional)
+  battery_alerts:
+    enabled: false                        # Enable battery alerts
+    low_battery_threshold: 20            # Alert when battery drops below this percentage
+    critical_battery_threshold: 10       # Critical battery alert threshold
