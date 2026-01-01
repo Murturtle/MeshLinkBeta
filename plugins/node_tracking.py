@@ -209,14 +209,31 @@ class NodeTracking(plugins.Base):
                 'rx_rssi': packet.get('rxRssi'),
                 'raw_packet': self._serialize_packet(packet)
             }
-            
+
             # Calculate hops away
             if packet_data['hop_start'] and packet_data['hop_limit']:
                 packet_data['hops_away'] = packet_data['hop_start'] - packet_data['hop_limit']
-            
-            # Extract relay node (if forwarded)
-            # Note: Meshtastic doesn't directly expose relay node in packet
-            # We can infer it from hopLimit changes in topology tracking
+
+            # Extract relay node (if available in packet)
+            # As of Meshtastic firmware 2.x, relayNode field is available
+            relay_node = packet.get('relayNode')
+            if relay_node:
+                # relayNode can be a node ID/number
+                packet_data['relay_node_id'] = str(relay_node)
+
+                # Try to get relay node name from interface's node database
+                try:
+                    relay_node_info = interface.nodes.get(relay_node)
+                    if relay_node_info and relay_node_info.get('user'):
+                        user = relay_node_info['user']
+                        relay_name = user.get('longName') or user.get('shortName')
+                        packet_data['relay_node_name'] = relay_name
+                        logger.info(f"Packet from {node_id} relayed via {relay_name} ({relay_node})")
+                    else:
+                        logger.info(f"Packet from {node_id} relayed via node {relay_node}")
+                except Exception as e:
+                    logger.warn(f"Error getting relay node name: {e}")
+                    pass  # Relay node name not available, ID is sufficient
             
             # Extract position if POSITION_APP
             if decoded.get('portnum') == 'POSITION_APP':
