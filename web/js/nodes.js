@@ -207,7 +207,7 @@ function renderNodes() {
             <td>${getStatusBadge(node)}</td>
             <td>${getBatteryDisplay(node)}</td>
             <td>${getLocationDisplay(node)}</td>
-            <td>${formatTime(node.last_seen_utc)}</td>
+            <td>${formatLastSeen(node.last_seen_utc)}</td>
             <td>${node.total_packets_received || 0}</td>
             <td>${escapeHtml(node.hardware_model || 'Unknown')}</td>
             <td>
@@ -264,23 +264,50 @@ function getLocationDisplay(node) {
     return '<span class="text-muted">No GPS</span>';
 }
 
-// Format Time
+// Format Time (relative)
 function formatTime(isoString) {
     if (!isoString) return 'Never';
-    
+
     const date = new Date(isoString);
     const now = new Date();
     const diff = now - date;
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
-    
+
     if (minutes < 1) return 'seconds ago';
     if (minutes < 60) return `${minutes}m ago`;
     if (hours < 24) return `${hours}h ago`;
     if (days < 7) return `${days}d ago`;
-    
+
     return date.toLocaleDateString();
+}
+
+// Format timestamp for "Last Seen" - shows actual time and relative time
+function formatLastSeen(isoString) {
+    if (!isoString) return 'Never';
+
+    const date = new Date(isoString);
+    const now = new Date();
+    const diff = now - date;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    // Format the actual timestamp
+    const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const dateStr = date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+
+    // Format relative time
+    let relativeTime;
+    if (minutes < 1) relativeTime = 'just now';
+    else if (minutes < 60) relativeTime = `${minutes}m ago`;
+    else if (hours < 24) relativeTime = `${hours}h ago`;
+    else if (days < 7) relativeTime = `${days}d ago`;
+    else relativeTime = `${days}d ago`;
+
+    // Show both actual time and relative time
+    return `<div style="white-space: nowrap;">${dateStr} ${timeStr}</div><div style="font-size: 0.85em; color: #6c757d;">${relativeTime}</div>`;
 }
 
 // Show Node Details

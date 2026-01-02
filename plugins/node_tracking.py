@@ -188,6 +188,82 @@ class NodeTracking(plugins.Base):
             logger.warn(f"Error extracting node data: {e}")
             return None
     
+    def _match_relay_node(self, partial_id: int, interface, source_node_id: str) -> Optional[Dict[str, str]]:
+        """
+        Match a partial relay node ID (last byte) to an actual node.
+
+        Args:
+            partial_id: The partial node ID from relayNode field (last byte)
+            interface: Meshtastic interface with node database
+            source_node_id: The source node ID (to exclude from matches)
+
+        Returns:
+            Dict with 'id' and 'name' of matched node, or None if no match
+        """
+        try:
+            # Get all known nodes from interface
+            if not hasattr(interface, 'nodes') or not interface.nodes:
+                return None
+
+            matches = []
+
+            # Check each known node
+            for node_num, node_info in interface.nodes.items():
+                # Skip the source node (packet didn't relay through itself)
+                node_id = node_info.get('user', {}).get('id')
+                if node_id == source_node_id:
+                    continue
+
+                # Extract last byte of this node's number
+                # relayNode contains the last 8 bits of the node number
+                last_byte = node_num & 0xFF
+
+                if last_byte == (partial_id & 0xFF):
+                    # Found a match!
+                    user = node_info.get('user', {})
+                    node_name = user.get('longName') or user.get('shortName') or node_id or f"!{node_num:08x}"
+
+                    # Get additional info for heuristics
+                    snr = node_info.get('snr', -999)
+                    last_heard = node_info.get('lastHeard', 0)
+
+                    matches.append({
+                        'id': node_id or f"!{node_num:08x}",
+                        'name': node_name,
+                        'num': node_num,
+                        'snr': snr,
+                        'last_heard': last_heard
+                    })
+
+            if not matches:
+                return None
+
+            if len(matches) == 1:
+                # Single match - use it
+                return matches[0]
+
+            # Multiple matches - use heuristics to pick best one
+            # Prefer nodes with:
+            # 1. Recent activity (last_heard)
+            # 2. Better signal quality (SNR)
+            # 3. More likely to be a relay (topology data could be added here)
+
+            # Sort by last_heard (most recent first), then by SNR (best first)
+            matches.sort(key=lambda x: (x['last_heard'], x['snr']), reverse=True)
+
+            best_match = matches[0]
+
+            # Log when there are multiple matches
+            if len(matches) > 1:
+                others = ', '.join([m['name'] for m in matches[1:]])
+                logger.info(f"Multiple relay matches for {partial_id:#x}: chose {best_match['name']}, also matched: {others}")
+
+            return best_match
+
+        except Exception as e:
+            logger.warn(f"Error matching relay node: {e}")
+            return None
+
     def _extract_packet_data(self, packet: Dict[str, Any], interface) -> Optional[Dict[str, Any]]:
         """Extract packet data for storage"""
         try:
@@ -216,24 +292,18 @@ class NodeTracking(plugins.Base):
 
             # Extract relay node (if available in packet)
             # As of Meshtastic firmware 2.x, relayNode field is available
-            relay_node = packet.get('relayNode')
-            if relay_node:
-                # relayNode can be a node ID/number
-                packet_data['relay_node_id'] = str(relay_node)
-
-                # Try to get relay node name from interface's node database
-                try:
-                    relay_node_info = interface.nodes.get(relay_node)
-                    if relay_node_info and relay_node_info.get('user'):
-                        user = relay_node_info['user']
-                        relay_name = user.get('longName') or user.get('shortName')
-                        packet_data['relay_node_name'] = relay_name
-                        logger.info(f"Packet from {node_id} relayed via {relay_name} ({relay_node})")
-                    else:
-                        logger.info(f"Packet from {node_id} relayed via node {relay_node}")
-                except Exception as e:
-                    logger.warn(f"Error getting relay node name: {e}")
-                    pass  # Relay node name not available, ID is sufficient
+            # NOTE: relayNode contains only the LAST BITS of the node ID (not full ID)
+            # We need to match it against known nodes to find the actual relay
+            relay_node_partial = packet.get('relayNode')
+            if relay_node_partial is not None and packet_data.get('hops_away', 0) > 0:
+                matched_relay = self._match_relay_node(relay_node_partial, interface, node_id)
+                if matched_relay:
+                    packet_data['relay_node_id'] = matched_relay['id']
+                    packet_data['relay_node_name'] = matched_relay['name']
+                    logger.info(f"Packet from {node_id} relayed via {matched_relay['name']} (matched {relay_node_partial:#x})")
+                else:
+                    # Store partial ID for debugging
+                    logger.warn(f"Could not match relay node {relay_node_partial:#x} for packet from {node_id}")
             
             # Extract position if POSITION_APP
             if decoded.get('portnum') == 'POSITION_APP':
