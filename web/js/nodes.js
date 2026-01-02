@@ -13,8 +13,9 @@ let currentFilter = {
 };
 let map = null;
 let mapMarkers = [];
-let topologyNetwork = null;
+let topologySimulation = null;
 let topologyData = null;
+let topologySvg = null;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -542,7 +543,7 @@ async function loadTopology() {
     }
 }
 
-// Render Topology
+// Render Topology with D3.js
 function renderTopology() {
     const graphContainer = document.getElementById('topology-graph');
     const infoContainer = document.getElementById('topology-info');
@@ -555,95 +556,159 @@ function renderTopology() {
     // Clear previous content
     graphContainer.innerHTML = '';
 
-    // Create vis-network nodes and edges
-    const visNodes = topologyData.nodes.map(node => {
-        // Color based on hop count
-        let color, level;
-        if (node.hops === 0) {
-            color = '#28a745';  // Green - direct connection
-            level = 0;
-        } else if (node.hops === 1) {
-            color = '#ffc107';  // Yellow - 1 hop away
-            level = 1;
-        } else if (node.hops < 99) {
-            color = '#dc3545';  // Red - 2+ hops away
-            level = 2;
-        } else {
-            color = '#6c757d';  // Gray - unknown
-            level = 3;
-        }
+    // Set up dimensions
+    const width = graphContainer.clientWidth;
+    const height = 600;
 
-        return {
+    // Helper function to get node color based on hop count
+    function getNodeColor(hops) {
+        if (hops === 0) return '#28a745';  // Green - direct
+        if (hops === 1) return '#ffc107';  // Yellow - 1 hop
+        if (hops < 99) return '#dc3545';   // Red - 2+ hops
+        return '#6c757d';                   // Gray - unknown
+    }
+
+    // Create SVG
+    const svg = d3.select('#topology-graph')
+        .append('svg')
+        .attr('width', width)
+        .attr('height', height)
+        .call(d3.zoom()
+            .scaleExtent([0.1, 4])
+            .on('zoom', (event) => {
+                container.attr('transform', event.transform);
+            }));
+
+    topologySvg = svg;
+
+    // Create container for zoom/pan
+    const container = svg.append('g');
+
+    // Prepare data - create node lookup map
+    const nodeMap = new Map();
+    topologyData.nodes.forEach(node => {
+        nodeMap.set(node.id, {
             id: node.id,
             label: node.label,
-            title: `${node.label}\nHops: ${node.hops === 99 ? 'Unknown' : node.hops}\nBattery: ${node.battery || 'N/A'}%`,
-            color: {
-                background: color,
-                border: '#667eea',
-                highlight: { background: color, border: '#667eea' }
-            },
-            font: { color: '#ffffff', size: 14 },
-            level: level,
-            hops: node.hops
-        };
+            hops: node.hops,
+            battery: node.battery
+        });
     });
 
-    const visEdges = topologyData.edges.map(edge => ({
-        from: edge.from,
-        to: edge.to,
-        arrows: 'to',
-        color: { color: '#667eea', highlight: '#764ba2' },
-        width: 2,
-        title: `${edge.hops} hop${edge.hops !== 1 ? 's' : ''}`
+    // Create links with source/target objects
+    const links = topologyData.edges.map(edge => ({
+        source: edge.from,
+        target: edge.to,
+        hops: edge.hops
     }));
 
-    // Create network
-    const networkData = {
-        nodes: new vis.DataSet(visNodes),
-        edges: new vis.DataSet(visEdges)
-    };
+    const nodes = Array.from(nodeMap.values());
 
-    const options = {
-        layout: {
-            hierarchical: {
-                enabled: true,
-                levelSeparation: 150,
-                nodeSpacing: 150,
-                treeSpacing: 200,
-                direction: 'UD',  // Up-Down
-                sortMethod: 'directed'
-            }
-        },
-        physics: {
-            enabled: false
-        },
-        nodes: {
-            shape: 'box',
-            margin: 10,
-            widthConstraint: { minimum: 100, maximum: 200 }
-        },
-        edges: {
-            smooth: {
-                type: 'cubicBezier',
-                forceDirection: 'vertical',
-                roundness: 0.4
-            }
-        },
-        interaction: {
-            hover: true,
-            tooltipDelay: 100
-        }
-    };
+    // Create force simulation
+    const simulation = d3.forceSimulation(nodes)
+        .force('link', d3.forceLink(links)
+            .id(d => d.id)
+            .distance(150))
+        .force('charge', d3.forceManyBody()
+            .strength(-400))
+        .force('center', d3.forceCenter(width / 2, height / 2))
+        .force('collision', d3.forceCollide().radius(50));
 
-    topologyNetwork = new vis.Network(graphContainer, networkData, options);
+    topologySimulation = simulation;
 
-    // Add click handler to show node details
-    topologyNetwork.on('click', function(params) {
-        if (params.nodes.length > 0) {
-            const nodeId = params.nodes[0];
-            showNodeDetails(nodeId);
-        }
+    // Create arrow markers for links
+    svg.append('defs').selectAll('marker')
+        .data(['arrow'])
+        .enter()
+        .append('marker')
+        .attr('id', 'arrow')
+        .attr('viewBox', '0 -5 10 10')
+        .attr('refX', 30)
+        .attr('refY', 0)
+        .attr('markerWidth', 6)
+        .attr('markerHeight', 6)
+        .attr('orient', 'auto')
+        .append('path')
+        .attr('d', 'M0,-5L10,0L0,5')
+        .attr('fill', '#667eea');
+
+    // Create links
+    const link = container.append('g')
+        .selectAll('line')
+        .data(links)
+        .enter()
+        .append('line')
+        .attr('stroke', '#667eea')
+        .attr('stroke-width', 2)
+        .attr('marker-end', 'url(#arrow)')
+        .attr('stroke-opacity', 0.6);
+
+    // Create node groups
+    const node = container.append('g')
+        .selectAll('g')
+        .data(nodes)
+        .enter()
+        .append('g')
+        .call(d3.drag()
+            .on('start', dragStarted)
+            .on('drag', dragged)
+            .on('end', dragEnded))
+        .on('click', (event, d) => {
+            event.stopPropagation();
+            showNodeDetails(d.id);
+        })
+        .style('cursor', 'pointer');
+
+    // Add circles to nodes
+    node.append('circle')
+        .attr('r', 25)
+        .attr('fill', d => getNodeColor(d.hops))
+        .attr('stroke', '#667eea')
+        .attr('stroke-width', 3);
+
+    // Add labels to nodes
+    node.append('text')
+        .text(d => d.label.length > 15 ? d.label.substring(0, 12) + '...' : d.label)
+        .attr('text-anchor', 'middle')
+        .attr('dy', '.35em')
+        .attr('fill', '#ffffff')
+        .attr('font-size', '12px')
+        .attr('font-weight', '600')
+        .attr('pointer-events', 'none');
+
+    // Add tooltips
+    node.append('title')
+        .text(d => `${d.label}\nHops: ${d.hops === 99 ? 'Unknown' : d.hops}\nBattery: ${d.battery || 'N/A'}%`);
+
+    // Update positions on each tick
+    simulation.on('tick', () => {
+        link
+            .attr('x1', d => d.source.x)
+            .attr('y1', d => d.source.y)
+            .attr('x2', d => d.target.x)
+            .attr('y2', d => d.target.y);
+
+        node
+            .attr('transform', d => `translate(${d.x},${d.y})`);
     });
+
+    // Drag functions
+    function dragStarted(event, d) {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+    }
+
+    function dragged(event, d) {
+        d.fx = event.x;
+        d.fy = event.y;
+    }
+
+    function dragEnded(event, d) {
+        if (!event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+    }
 
     // Show info summary
     const directNodes = topologyData.nodes.filter(n => n.hops === 0).length;

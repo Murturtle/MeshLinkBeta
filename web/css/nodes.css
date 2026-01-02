@@ -392,6 +392,26 @@ tr:hover {
     background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);
 }
 
+#topology-graph svg {
+    display: block;
+    border-radius: 8px;
+}
+
+#topology-graph text {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+}
+
+#topology-graph circle {
+    transition: stroke-width 0.2s, r 0.2s;
+}
+
+#topology-graph circle:hover {
+    stroke-width: 4;
+    r: 28;
+}
+
 #topology-info {
     position: relative;
     z-index: 10;
