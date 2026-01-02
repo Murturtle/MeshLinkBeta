@@ -13,6 +13,8 @@ let currentFilter = {
 };
 let map = null;
 let mapMarkers = [];
+let topologyNetwork = null;
+let topologyData = null;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -379,6 +381,48 @@ async function showNodeDetails(nodeId) {
                     <span class="detail-label">Via MQTT:</span>
                     <span class="detail-value">${node.is_mqtt ? 'Yes' : 'No'}</span>
                 </div>
+                ${(() => {
+                    // Find most recent packet with relay info
+                    if (packetsData.success && packetsData.packets.length > 0) {
+                        const recentPacket = packetsData.packets[0];
+                        if (recentPacket.relay_node_id && recentPacket.relay_node_name) {
+                            return `
+                                <div class="detail-item">
+                                    <span class="detail-label">Relayed Via:</span>
+                                    <span class="detail-value" style="font-weight: 600; color: #667eea;">
+                                        ${escapeHtml(recentPacket.relay_node_name)}
+                                        <span style="font-size: 0.85em; color: #6c757d; font-family: monospace;">
+                                            (${escapeHtml(recentPacket.relay_node_id)})
+                                        </span>
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Hop Distance:</span>
+                                    <span class="detail-value">${recentPacket.hops_away !== null ? recentPacket.hops_away + ' hop' + (recentPacket.hops_away !== 1 ? 's' : '') : 'Unknown'}</span>
+                                </div>
+                            `;
+                        } else if (recentPacket.hops_away === 0) {
+                            return `
+                                <div class="detail-item">
+                                    <span class="detail-label">Connection:</span>
+                                    <span class="detail-value" style="font-weight: 600; color: #28a745;">Direct (0 hops)</span>
+                                </div>
+                            `;
+                        } else if (recentPacket.hops_away > 0) {
+                            return `
+                                <div class="detail-item">
+                                    <span class="detail-label">Connection:</span>
+                                    <span class="detail-value">Relayed (${recentPacket.hops_away} hop${recentPacket.hops_away !== 1 ? 's' : ''})</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Relay Node:</span>
+                                    <span class="detail-value" style="color: #6c757d;">Unknown - not yet identified</span>
+                                </div>
+                            `;
+                        }
+                    }
+                    return '';
+                })()}
             </div>
             
             ${node.battery_level ? `
@@ -476,56 +520,152 @@ async function showNodeDetails(nodeId) {
 
 // Load Topology
 async function loadTopology() {
-    const container = document.getElementById('topology-info');
-    container.innerHTML = '<p class="loading">Loading topology...</p>';
-    
+    const graphContainer = document.getElementById('topology-graph');
+    const infoContainer = document.getElementById('topology-info');
+
+    graphContainer.innerHTML = '<p class="loading">Loading topology...</p>';
+    infoContainer.innerHTML = '';
+
     try {
-        const response = await fetch(`${API_BASE}/api/topology`);
+        const response = await fetch(`${API_BASE}/api/topology/hop-graph`);
         const data = await response.json();
-        
+
         if (data.success) {
-            allTopology = data.links;
+            topologyData = data;
             renderTopology();
         } else {
             throw new Error(data.error || 'Failed to load topology');
         }
     } catch (error) {
         console.error('Failed to load topology:', error);
-        container.innerHTML = `<p style="color: #dc3545;">Error loading topology: ${error.message}</p>`;
+        graphContainer.innerHTML = `<p style="color: #dc3545;">Error loading topology: ${error.message}</p>`;
     }
 }
 
 // Render Topology
 function renderTopology() {
-    const container = document.getElementById('topology-info');
-    const qualityThreshold = parseInt(document.getElementById('quality-filter')?.value || 0);
-    
-    let filtered = allTopology.filter(link => 
-        link.link_quality_score >= qualityThreshold
-    );
-    
-    if (filtered.length === 0) {
-        container.innerHTML = '<p class="info-message">No topology links found</p>';
+    const graphContainer = document.getElementById('topology-graph');
+    const infoContainer = document.getElementById('topology-info');
+
+    if (!topologyData || !topologyData.nodes || topologyData.nodes.length === 0) {
+        graphContainer.innerHTML = '<p class="info-message">No topology data available</p>';
         return;
     }
-    
-    container.innerHTML = filtered.map(link => {
-        const qualityClass = link.link_quality_score > 70 ? 'link-quality-high' :
-                           link.link_quality_score > 40 ? 'link-quality-medium' : 'link-quality-low';
-        
-        return `
-            <div class="link-item ${qualityClass}">
-                <strong>${link.source_node_id}</strong> ↔ <strong>${link.neighbor_node_id}</strong>
-                <br>
-                Quality: ${link.link_quality_score.toFixed(0)}% | 
-                SNR: ${link.avg_snr?.toFixed(1) || 'N/A'} dB | 
-                RSSI: ${link.avg_rssi || 'N/A'} dBm | 
-                Packets: ${link.total_packets}
-                <br>
-                <small>Last heard: ${formatTime(link.last_heard_utc)}</small>
+
+    // Clear previous content
+    graphContainer.innerHTML = '';
+
+    // Create vis-network nodes and edges
+    const visNodes = topologyData.nodes.map(node => {
+        // Color based on hop count
+        let color, level;
+        if (node.hops === 0) {
+            color = '#28a745';  // Green - direct connection
+            level = 0;
+        } else if (node.hops === 1) {
+            color = '#ffc107';  // Yellow - 1 hop away
+            level = 1;
+        } else if (node.hops < 99) {
+            color = '#dc3545';  // Red - 2+ hops away
+            level = 2;
+        } else {
+            color = '#6c757d';  // Gray - unknown
+            level = 3;
+        }
+
+        return {
+            id: node.id,
+            label: node.label,
+            title: `${node.label}\nHops: ${node.hops === 99 ? 'Unknown' : node.hops}\nBattery: ${node.battery || 'N/A'}%`,
+            color: {
+                background: color,
+                border: '#667eea',
+                highlight: { background: color, border: '#667eea' }
+            },
+            font: { color: '#ffffff', size: 14 },
+            level: level,
+            hops: node.hops
+        };
+    });
+
+    const visEdges = topologyData.edges.map(edge => ({
+        from: edge.from,
+        to: edge.to,
+        arrows: 'to',
+        color: { color: '#667eea', highlight: '#764ba2' },
+        width: 2,
+        title: `${edge.hops} hop${edge.hops !== 1 ? 's' : ''}`
+    }));
+
+    // Create network
+    const networkData = {
+        nodes: new vis.DataSet(visNodes),
+        edges: new vis.DataSet(visEdges)
+    };
+
+    const options = {
+        layout: {
+            hierarchical: {
+                enabled: true,
+                levelSeparation: 150,
+                nodeSpacing: 150,
+                treeSpacing: 200,
+                direction: 'UD',  // Up-Down
+                sortMethod: 'directed'
+            }
+        },
+        physics: {
+            enabled: false
+        },
+        nodes: {
+            shape: 'box',
+            margin: 10,
+            widthConstraint: { minimum: 100, maximum: 200 }
+        },
+        edges: {
+            smooth: {
+                type: 'cubicBezier',
+                forceDirection: 'vertical',
+                roundness: 0.4
+            }
+        },
+        interaction: {
+            hover: true,
+            tooltipDelay: 100
+        }
+    };
+
+    topologyNetwork = new vis.Network(graphContainer, networkData, options);
+
+    // Add click handler to show node details
+    topologyNetwork.on('click', function(params) {
+        if (params.nodes.length > 0) {
+            const nodeId = params.nodes[0];
+            showNodeDetails(nodeId);
+        }
+    });
+
+    // Show info summary
+    const directNodes = topologyData.nodes.filter(n => n.hops === 0).length;
+    const oneHopNodes = topologyData.nodes.filter(n => n.hops === 1).length;
+    const multiHopNodes = topologyData.nodes.filter(n => n.hops > 1 && n.hops < 99).length;
+
+    infoContainer.innerHTML = `
+        <div style="padding: 15px; background: #f8f9fa; border-radius: 8px; margin-top: 15px;">
+            <h4 style="margin-top: 0; color: #667eea;">Network Summary</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                <div style="padding: 10px; background: white; border-radius: 4px; border-left: 4px solid #28a745;">
+                    <strong>Direct (0 hops):</strong> ${directNodes}
+                </div>
+                <div style="padding: 10px; background: white; border-radius: 4px; border-left: 4px solid #ffc107;">
+                    <strong>1 Hop Away:</strong> ${oneHopNodes}
+                </div>
+                <div style="padding: 10px; background: white; border-radius: 4px; border-left: 4px solid #dc3545;">
+                    <strong>2+ Hops Away:</strong> ${multiHopNodes}
+                </div>
             </div>
-        `;
-    }).join('');
+        </div>
+    `;
 }
 
 // Initialize Map

@@ -203,6 +203,67 @@ class NodeWebServer(plugins.Base):
                     'error': str(e)
                 }), 500
         
+        @self.app.route('/api/topology/hop-graph', methods=['GET'])
+        def get_hop_topology():
+            """Get topology organized by hop distance from local node"""
+            try:
+                # Get all nodes and their recent packets
+                nodes = self.db.get_all_nodes()
+
+                # Build hop-based graph
+                graph_nodes = []
+                graph_edges = []
+
+                # Identify local node (the one we're connected to)
+                local_node_id = None  # This would be our node - we'll infer it
+
+                # Process each node
+                for node in nodes:
+                    node_id = node['node_id']
+
+                    # Get recent packets from this node to determine hop count
+                    packets = self.db.get_node_packets(node_id, limit=10)
+
+                    # Determine minimum hop count from this node
+                    min_hops = None
+                    relay_via = None
+
+                    for pkt in packets:
+                        if pkt.get('hops_away') is not None:
+                            if min_hops is None or pkt['hops_away'] < min_hops:
+                                min_hops = pkt['hops_away']
+                                relay_via = pkt.get('relay_node_id')
+
+                    # Add node to graph
+                    graph_nodes.append({
+                        'id': node_id,
+                        'label': node.get('long_name') or node.get('short_name') or node_id,
+                        'hops': min_hops if min_hops is not None else 99,
+                        'battery': node.get('battery_level'),
+                        'lastSeen': node.get('last_seen_utc'),
+                        'relay_via': relay_via
+                    })
+
+                    # Add edge if relayed through another node
+                    if relay_via and min_hops and min_hops > 0:
+                        graph_edges.append({
+                            'from': relay_via,
+                            'to': node_id,
+                            'hops': min_hops
+                        })
+
+                return jsonify({
+                    'success': True,
+                    'nodes': graph_nodes,
+                    'edges': graph_edges
+                })
+            except Exception as e:
+                logger.warn(f"Error getting hop topology: {e}")
+                return jsonify({
+                    'success': False,
+                    'error': str(e)
+                }), 500
+
         @self.app.route('/api/stats', methods=['GET'])
         def get_stats():
             """Get network statistics"""

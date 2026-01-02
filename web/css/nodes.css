@@ -376,11 +376,25 @@ tr:hover {
 
 /* Topology */
 .topology-container {
-    min-height: 500px;
+    min-height: 600px;
+    height: 600px;
     border: 2px solid #e9ecef;
     border-radius: 8px;
-    padding: 20px;
-    background: #f8f9fa;
+    background: #ffffff;
+    position: relative;
+    overflow: hidden;
+}
+
+#topology-graph {
+    width: 100%;
+    height: 100%;
+    min-height: 600px;
+    background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);
+}
+
+#topology-info {
+    position: relative;
+    z-index: 10;
 }
 
 .info-message {
