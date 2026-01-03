@@ -219,6 +219,8 @@ class NodeWebServer(plugins.Base):
                 graph_nodes.append({
                     'id': 'LOCAL_NODE',
                     'label': 'Self (This Device)',
+                    'short_name': 'Self',
+                    'long_name': 'Self (This Device)',
                     'hops': -1,  # Special marker for local node
                     'battery': None,
                     'lastSeen': None,
@@ -252,6 +254,8 @@ class NodeWebServer(plugins.Base):
                     graph_nodes.append({
                         'id': node_id,
                         'label': node.get('long_name') or node.get('short_name') or node_id,
+                        'short_name': node.get('short_name'),
+                        'long_name': node.get('long_name'),
                         'hops': min_hops if min_hops is not None else 99,
                         'battery': node.get('battery_level'),
                         'lastSeen': node.get('last_seen_utc'),

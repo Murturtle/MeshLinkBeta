@@ -607,7 +607,8 @@ function renderTopology() {
         topologyData.nodes.forEach(node => {
             nodeMap.set(node.id, {
                 id: node.id,
-                label: node.label,
+                label: node.short_name || node.label, // Use short_name for display
+                longName: node.long_name || node.label, // Keep long_name for tooltips
                 hops: node.hops,
                 battery: node.battery
             });
@@ -639,27 +640,87 @@ function renderTopology() {
         const centerY = height / 2;
         const radiusStep = 120; // Distance between each hop ring
 
-        nodes.forEach((node, i) => {
-            const radius = (node.hops + 1) * radiusStep; // Self is at center (hops=-1)
-            const angle = (i / nodes.length) * 2 * Math.PI;
-            node.x = centerX + radius * Math.cos(angle);
-            node.y = centerY + radius * Math.sin(angle);
+        // Group nodes by their relay node for clustering
+        const clusterMap = new Map();
+        links.forEach(link => {
+            if (link.source !== 'LOCAL_NODE') {
+                if (!clusterMap.has(link.source)) {
+                    clusterMap.set(link.source, []);
+                }
+                clusterMap.get(link.source).push(link.target);
+            }
         });
 
-        // Create force simulation with radial constraint
+        // Set initial positions - cluster nodes with same relay together
+        let angleOffset = 0;
+        const processedNodes = new Set();
+
+        nodes.forEach((node) => {
+            const radius = (node.hops + 1) * radiusStep;
+
+            // If this node is a relay for others, position it and its cluster together
+            if (clusterMap.has(node.id)) {
+                const clusterSize = clusterMap.get(node.id).length + 1; // +1 for relay node itself
+                const arcSize = (2 * Math.PI) / Math.max(nodes.length / 3, clusterSize);
+
+                // Position the relay node
+                if (!processedNodes.has(node.id)) {
+                    const angle = angleOffset;
+                    node.x = centerX + radius * Math.cos(angle);
+                    node.y = centerY + radius * Math.sin(angle);
+                    processedNodes.add(node.id);
+                }
+
+                // Position clustered nodes near their relay
+                const clustered = clusterMap.get(node.id);
+                clustered.forEach((nodeId, idx) => {
+                    const targetNode = nodes.find(n => n.id === nodeId);
+                    if (targetNode && !processedNodes.has(nodeId)) {
+                        const childRadius = (targetNode.hops + 1) * radiusStep;
+                        const angle = angleOffset + ((idx + 1) / (clusterSize + 1)) * arcSize * 2;
+                        targetNode.x = centerX + childRadius * Math.cos(angle);
+                        targetNode.y = centerY + childRadius * Math.sin(angle);
+                        processedNodes.add(nodeId);
+                    }
+                });
+
+                angleOffset += arcSize * clusterSize;
+            } else if (!processedNodes.has(node.id)) {
+                // Position unclustered nodes
+                const angle = angleOffset;
+                node.x = centerX + radius * Math.cos(angle);
+                node.y = centerY + radius * Math.sin(angle);
+                processedNodes.add(node.id);
+                angleOffset += (2 * Math.PI) / nodes.length;
+            }
+        });
+
+        // Create force simulation with radial constraint and clustering
         const simulation = d3.forceSimulation(nodes)
             .force('link', d3.forceLink(links)
                 .id(d => d.id)
-                .distance(100)
-                .strength(0.3))
+                .distance(d => {
+                    // Shorter distance for relay links to keep clusters tight
+                    if (d.source.id !== 'LOCAL_NODE' && d.target.hops === d.source.hops + 1) {
+                        return 60; // Tight clustering for relay connections
+                    }
+                    return 100; // Normal distance for other links
+                })
+                .strength(d => {
+                    // Stronger links for relay connections
+                    if (d.source.id !== 'LOCAL_NODE' && d.target.hops === d.source.hops + 1) {
+                        return 0.7; // Strong clustering
+                    }
+                    return 0.3; // Normal strength
+                }))
             .force('charge', d3.forceManyBody()
-                .strength(-200))
+                .strength(-150))
             .force('collision', d3.forceCollide().radius(d => d.hops === -1 ? 60 : 50))
             .force('radial', d3.forceRadial(
                 d => (d.hops + 1) * radiusStep,
                 centerX,
                 centerY
-            ).strength(0.8));
+            ).strength(0.7));
 
         topologySimulation = simulation;
 
@@ -748,19 +809,19 @@ function renderTopology() {
             .attr('stroke', d => d.hops === -1 ? '#764ba2' : '#667eea')
             .attr('stroke-width', d => d.hops === -1 ? 4 : 3);
 
-        // Add labels to nodes
+        // Add labels to nodes (using short_name, no truncation needed)
         node.append('text')
-            .text(d => d.label.length > 15 ? d.label.substring(0, 12) + '...' : d.label)
+            .text(d => d.label)
             .attr('text-anchor', 'middle')
             .attr('dy', '.35em')
             .attr('fill', '#ffffff')
-            .attr('font-size', '12px')
+            .attr('font-size', d => d.hops === -1 ? '11px' : '10px')
             .attr('font-weight', '600')
             .attr('pointer-events', 'none');
 
-        // Add tooltips
+        // Add tooltips (showing full long_name)
         node.append('title')
-            .text(d => `${d.label}\nHops: ${d.hops === 99 ? 'Unknown' : d.hops}\nBattery: ${d.battery || 'N/A'}%`);
+            .text(d => `${d.longName}\nHops: ${d.hops === 99 ? 'Unknown' : d.hops}\nBattery: ${d.battery || 'N/A'}%`);
 
         // Update positions on each tick
         simulation.on('tick', () => {
