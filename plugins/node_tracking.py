@@ -208,8 +208,10 @@ class NodeTracking(plugins.Base):
         try:
             # Get all known nodes from interface
             if not hasattr(interface, 'nodes') or not interface.nodes:
+                logger.warn(f"Interface has no nodes database for relay matching")
                 return None
 
+            logger.info(f"Matching relay node {partial_id:#x} for packet from {source_node_id}, checking {len(interface.nodes)} nodes")
             matches = []
 
             # Check each known node
@@ -233,6 +235,8 @@ class NodeTracking(plugins.Base):
                     # Found a match!
                     user = node_info.get('user', {})
                     node_name = user.get('longName') or user.get('shortName') or node_id or f"!{node_num_int:08x}"
+
+                    logger.info(f"  Found match: {node_id or f'!{node_num_int:08x}'} ({node_name}) - last byte {last_byte:#x}")
 
                     # Get additional info for heuristics
                     snr = node_info.get('snr', -999)
