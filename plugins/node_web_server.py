@@ -263,11 +263,15 @@ class NodeWebServer(plugins.Base):
                         })
                     elif relay_via and min_hops and min_hops > 0:
                         # Relayed through another node
-                        graph_edges.append({
-                            'from': relay_via,
-                            'to': node_id,
-                            'hops': min_hops
-                        })
+                        # Only add edge if relay_via is a valid full node ID (starts with !)
+                        if isinstance(relay_via, str) and relay_via.startswith('!'):
+                            graph_edges.append({
+                                'from': relay_via,
+                                'to': node_id,
+                                'hops': min_hops
+                            })
+                        else:
+                            logger.debug(f"Skipping edge for {node_id}: relay_via '{relay_via}' is not a valid node ID")
 
                 return jsonify({
                     'success': True,
