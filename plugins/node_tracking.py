@@ -102,14 +102,18 @@ class NodeTracking(plugins.Base):
             # Check if we should track this packet type
             portnum = packet.get('decoded', {}).get('portnum', '')
             track_types = NodeTracking._config.get('track_packet_types', [])
-            
+
             if portnum in track_types or not track_types:
                 # Extract and store packet data
                 packet_data = self._extract_packet_data(packet, interface)
                 if packet_data:
                     max_packets = NodeTracking._config.get('max_packets_per_node', 1000)
                     NodeTracking._db.insert_packet(packet_data, max_packets)
-            
+
+                    # Log when TRACEROUTE packets are stored
+                    if portnum == 'TRACEROUTE_APP':
+                        logger.info(f"Stored TRACEROUTE packet from {node_id}")
+
             # Update topology if enabled
             if NodeTracking._config.get('topology', {}).get('enabled', True):
                 self._update_topology(packet, interface)
@@ -206,51 +210,98 @@ class NodeTracking(plugins.Base):
             Dict with 'id' and 'name' of matched node, or None if no match
         """
         try:
-            # Get all known nodes from interface
-            if not hasattr(interface, 'nodes') or not interface.nodes:
-                logger.warn(f"Interface has no nodes database for relay matching")
-                return None
-
-            logger.info(f"Matching relay node {partial_id:#x} for packet from {source_node_id}, checking {len(interface.nodes)} nodes")
             matches = []
 
-            # Check each known node
-            for node_num, node_info in interface.nodes.items():
-                # Skip the source node (packet didn't relay through itself)
-                node_id = node_info.get('user', {}).get('id')
-                if node_id == source_node_id:
-                    continue
+            # First, try to match using interface.nodes (fast, in-memory)
+            if hasattr(interface, 'nodes') and interface.nodes:
+                logger.info(f"Matching relay node {partial_id:#x} for packet from {source_node_id}, checking {len(interface.nodes)} interface nodes")
 
-                # Extract last byte of this node's number
-                # relayNode contains the last 8 bits of the node number
-                # Ensure node_num is an integer (might be string in some cases)
+                # Check each known node
+                for node_num, node_info in interface.nodes.items():
+                    # Skip the source node (packet didn't relay through itself)
+                    node_id = node_info.get('user', {}).get('id')
+                    if node_id == source_node_id:
+                        continue
+
+                    # Extract last byte of this node's number
+                    # relayNode contains the last 8 bits of the node number
+                    # Ensure node_num is an integer (might be string in some cases)
+                    try:
+                        node_num_int = int(node_num) if isinstance(node_num, str) else node_num
+                    except (ValueError, TypeError):
+                        continue
+
+                    last_byte = node_num_int & 0xFF
+
+                    if last_byte == (partial_id & 0xFF):
+                        # Found a match!
+                        user = node_info.get('user', {})
+                        node_name = user.get('longName') or user.get('shortName') or node_id or f"!{node_num_int:08x}"
+
+                        logger.info(f"  Found interface match: {node_id or f'!{node_num_int:08x}'} ({node_name}) - last byte {last_byte:#x}")
+
+                        # Get additional info for heuristics
+                        snr = node_info.get('snr', -999)
+                        last_heard = node_info.get('lastHeard', 0)
+
+                        matches.append({
+                            'id': node_id or f"!{node_num_int:08x}",
+                            'name': node_name,
+                            'num': node_num_int,
+                            'snr': snr,
+                            'last_heard': last_heard
+                        })
+
+            # If no matches in interface.nodes, try database as fallback
+            if not matches and NodeTracking._db:
+                logger.info(f"No interface match for {partial_id:#x}, checking database")
+
                 try:
-                    node_num_int = int(node_num) if isinstance(node_num, str) else node_num
-                except (ValueError, TypeError):
-                    continue
+                    conn = NodeTracking._db._get_connection()
+                    cursor = conn.cursor()
 
-                last_byte = node_num_int & 0xFF
+                    # Find nodes where last byte of node_num matches
+                    cursor.execute("""
+                        SELECT node_id, node_num, long_name, short_name, last_seen_utc, total_packets_received
+                        FROM nodes
+                        WHERE node_id != ? AND node_num IS NOT NULL
+                    """, (source_node_id,))
 
-                if last_byte == (partial_id & 0xFF):
-                    # Found a match!
-                    user = node_info.get('user', {})
-                    node_name = user.get('longName') or user.get('shortName') or node_id or f"!{node_num_int:08x}"
+                    db_nodes = cursor.fetchall()
+                    logger.info(f"  Checking {len(db_nodes)} database nodes")
 
-                    logger.info(f"  Found match: {node_id or f'!{node_num_int:08x}'} ({node_name}) - last byte {last_byte:#x}")
+                    for row in db_nodes:
+                        node_num = row['node_num']
+                        if node_num is None:
+                            continue
 
-                    # Get additional info for heuristics
-                    snr = node_info.get('snr', -999)
-                    last_heard = node_info.get('lastHeard', 0)
+                        try:
+                            node_num_int = int(node_num) if isinstance(node_num, str) else node_num
+                        except (ValueError, TypeError):
+                            continue
 
-                    matches.append({
-                        'id': node_id or f"!{node_num_int:08x}",
-                        'name': node_name,
-                        'num': node_num_int,
-                        'snr': snr,
-                        'last_heard': last_heard
-                    })
+                        last_byte = node_num_int & 0xFF
+
+                        if last_byte == (partial_id & 0xFF):
+                            node_id = row['node_id']
+                            node_name = row['long_name'] or row['short_name'] or node_id
+
+                            logger.info(f"  Found database match: {node_id} ({node_name}) - last byte {last_byte:#x}")
+
+                            matches.append({
+                                'id': node_id,
+                                'name': node_name,
+                                'num': node_num_int,
+                                'snr': -999,  # No SNR data from database
+                                'last_heard': 0,  # Could parse last_seen_utc but not critical
+                                'total_packets': row['total_packets_received'] or 0
+                            })
+
+                except Exception as e:
+                    logger.warn(f"Error checking database for relay match: {e}")
 
             if not matches:
+                logger.info(f"  No match found for relay node {partial_id:#x}")
                 return None
 
             if len(matches) == 1:
@@ -259,12 +310,11 @@ class NodeTracking(plugins.Base):
 
             # Multiple matches - use heuristics to pick best one
             # Prefer nodes with:
-            # 1. Recent activity (last_heard)
+            # 1. Recent activity (last_heard from interface, or total_packets from db)
             # 2. Better signal quality (SNR)
-            # 3. More likely to be a relay (topology data could be added here)
 
-            # Sort by last_heard (most recent first), then by SNR (best first)
-            matches.sort(key=lambda x: (x['last_heard'], x['snr']), reverse=True)
+            # Sort by last_heard (most recent first), then by SNR (best first), then by total_packets
+            matches.sort(key=lambda x: (x.get('last_heard', 0), x.get('snr', -999), x.get('total_packets', 0)), reverse=True)
 
             best_match = matches[0]
 
@@ -277,6 +327,8 @@ class NodeTracking(plugins.Base):
 
         except Exception as e:
             logger.warn(f"Error matching relay node: {e}")
+            import traceback
+            traceback.print_exc()
             return None
 
     def _extract_packet_data(self, packet: Dict[str, Any], interface) -> Optional[Dict[str, Any]]:
@@ -322,7 +374,10 @@ class NodeTracking(plugins.Base):
                     else:
                         logger.warn(f"Matched relay node has invalid ID format: {matched_id} for packet from {node_id}")
                 else:
-                    logger.warn(f"Could not match relay node {relay_node_partial:#x} for packet from {node_id}")
+                    # Store partial ID even if we can't match it yet
+                    # This preserves relay data for future retroactive matching
+                    packet_data['relay_node_id'] = str(relay_node_partial)
+                    logger.info(f"Could not match relay node {relay_node_partial:#x} for packet from {node_id}, storing partial ID for future matching")
             
             # Extract position if POSITION_APP
             if decoded.get('portnum') == 'POSITION_APP':
