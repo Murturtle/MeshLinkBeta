@@ -548,6 +548,12 @@ function renderTopology() {
     const graphContainer = document.getElementById('topology-graph');
     const infoContainer = document.getElementById('topology-info');
 
+    console.log('renderTopology called', {
+        hasData: !!topologyData,
+        nodeCount: topologyData?.nodes?.length,
+        edgeCount: topologyData?.edges?.length
+    });
+
     if (!topologyData || !topologyData.nodes || topologyData.nodes.length === 0) {
         graphContainer.innerHTML = '<p class="info-message">No topology data available</p>';
         return;
@@ -556,9 +562,12 @@ function renderTopology() {
     // Clear previous content
     graphContainer.innerHTML = '';
 
-    // Set up dimensions
-    const width = graphContainer.clientWidth;
+    // Set up dimensions - ensure we have a valid width
+    const containerWidth = graphContainer.clientWidth || graphContainer.offsetWidth || 800;
+    const width = containerWidth > 0 ? containerWidth : 800;
     const height = 600;
+
+    console.log('Container dimensions:', { width, height });
 
     // Helper function to get node color based on hop count
     function getNodeColor(hops) {
@@ -568,169 +577,195 @@ function renderTopology() {
         return '#6c757d';                   // Gray - unknown
     }
 
-    // Create SVG
-    const svg = d3.select('#topology-graph')
-        .append('svg')
-        .attr('width', width)
-        .attr('height', height)
-        .call(d3.zoom()
-            .scaleExtent([0.1, 4])
-            .on('zoom', (event) => {
-                container.attr('transform', event.transform);
+    try {
+        // Create SVG
+        const svg = d3.select('#topology-graph')
+            .append('svg')
+            .attr('width', width)
+            .attr('height', height)
+            .style('background', 'linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%)')
+            .call(d3.zoom()
+                .scaleExtent([0.1, 4])
+                .on('zoom', (event) => {
+                    container.attr('transform', event.transform);
+                }));
+
+        console.log('SVG created:', svg.node());
+        topologySvg = svg;
+
+        // Create container for zoom/pan
+        const container = svg.append('g');
+
+        // Prepare data - create node lookup map
+        const nodeMap = new Map();
+        topologyData.nodes.forEach(node => {
+            nodeMap.set(node.id, {
+                id: node.id,
+                label: node.label,
+                hops: node.hops,
+                battery: node.battery
+            });
+        });
+
+        console.log('Processing nodes:', nodeMap.size);
+
+        // Create links with source/target objects - filter to only include valid nodes
+        const links = topologyData.edges
+            .filter(edge => {
+                const hasSource = nodeMap.has(edge.from);
+                const hasTarget = nodeMap.has(edge.to);
+                if (!hasSource || !hasTarget) {
+                    console.warn(`Skipping edge ${edge.from} -> ${edge.to}: source=${hasSource}, target=${hasTarget}`);
+                }
+                return hasSource && hasTarget;
+            })
+            .map(edge => ({
+                source: edge.from,
+                target: edge.to,
+                hops: edge.hops
             }));
 
-    topologySvg = svg;
+        const nodes = Array.from(nodeMap.values());
+        console.log('Nodes for simulation:', nodes.length, 'Links:', links.length, 'Filtered out:', topologyData.edges.length - links.length);
 
-    // Create container for zoom/pan
-    const container = svg.append('g');
+        // Create force simulation
+        const simulation = d3.forceSimulation(nodes)
+            .force('link', d3.forceLink(links)
+                .id(d => d.id)
+                .distance(150))
+            .force('charge', d3.forceManyBody()
+                .strength(-400))
+            .force('center', d3.forceCenter(width / 2, height / 2))
+            .force('collision', d3.forceCollide().radius(50));
 
-    // Prepare data - create node lookup map
-    const nodeMap = new Map();
-    topologyData.nodes.forEach(node => {
-        nodeMap.set(node.id, {
-            id: node.id,
-            label: node.label,
-            hops: node.hops,
-            battery: node.battery
+        topologySimulation = simulation;
+
+        // Create arrow markers for links
+        svg.append('defs').selectAll('marker')
+            .data(['arrow'])
+            .enter()
+            .append('marker')
+            .attr('id', 'arrow')
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', 30)
+            .attr('refY', 0)
+            .attr('markerWidth', 6)
+            .attr('markerHeight', 6)
+            .attr('orient', 'auto')
+            .append('path')
+            .attr('d', 'M0,-5L10,0L0,5')
+            .attr('fill', '#667eea');
+
+        // Create links
+        const link = container.append('g')
+            .selectAll('line')
+            .data(links)
+            .enter()
+            .append('line')
+            .attr('stroke', '#667eea')
+            .attr('stroke-width', 2)
+            .attr('marker-end', 'url(#arrow)')
+            .attr('stroke-opacity', 0.6);
+
+        console.log('Links created:', link.size());
+
+        // Drag functions (defined before use)
+        function dragStarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+
+        function dragEnded(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        }
+
+        // Create node groups
+        const node = container.append('g')
+            .selectAll('g')
+            .data(nodes)
+            .enter()
+            .append('g')
+            .call(d3.drag()
+                .on('start', dragStarted)
+                .on('drag', dragged)
+                .on('end', dragEnded))
+            .on('click', (event, d) => {
+                event.stopPropagation();
+                showNodeDetails(d.id);
+            })
+            .style('cursor', 'pointer');
+
+        console.log('Nodes created:', node.size());
+
+        // Add circles to nodes
+        node.append('circle')
+            .attr('r', 25)
+            .attr('fill', d => getNodeColor(d.hops))
+            .attr('stroke', '#667eea')
+            .attr('stroke-width', 3);
+
+        // Add labels to nodes
+        node.append('text')
+            .text(d => d.label.length > 15 ? d.label.substring(0, 12) + '...' : d.label)
+            .attr('text-anchor', 'middle')
+            .attr('dy', '.35em')
+            .attr('fill', '#ffffff')
+            .attr('font-size', '12px')
+            .attr('font-weight', '600')
+            .attr('pointer-events', 'none');
+
+        // Add tooltips
+        node.append('title')
+            .text(d => `${d.label}\nHops: ${d.hops === 99 ? 'Unknown' : d.hops}\nBattery: ${d.battery || 'N/A'}%`);
+
+        // Update positions on each tick
+        simulation.on('tick', () => {
+            link
+                .attr('x1', d => d.source.x)
+                .attr('y1', d => d.source.y)
+                .attr('x2', d => d.target.x)
+                .attr('y2', d => d.target.y);
+
+            node
+                .attr('transform', d => `translate(${d.x},${d.y})`);
         });
-    });
 
-    // Create links with source/target objects
-    const links = topologyData.edges.map(edge => ({
-        source: edge.from,
-        target: edge.to,
-        hops: edge.hops
-    }));
+        // Show info summary
+        const directNodes = topologyData.nodes.filter(n => n.hops === 0).length;
+        const oneHopNodes = topologyData.nodes.filter(n => n.hops === 1).length;
+        const multiHopNodes = topologyData.nodes.filter(n => n.hops > 1 && n.hops < 99).length;
 
-    const nodes = Array.from(nodeMap.values());
-
-    // Create force simulation
-    const simulation = d3.forceSimulation(nodes)
-        .force('link', d3.forceLink(links)
-            .id(d => d.id)
-            .distance(150))
-        .force('charge', d3.forceManyBody()
-            .strength(-400))
-        .force('center', d3.forceCenter(width / 2, height / 2))
-        .force('collision', d3.forceCollide().radius(50));
-
-    topologySimulation = simulation;
-
-    // Create arrow markers for links
-    svg.append('defs').selectAll('marker')
-        .data(['arrow'])
-        .enter()
-        .append('marker')
-        .attr('id', 'arrow')
-        .attr('viewBox', '0 -5 10 10')
-        .attr('refX', 30)
-        .attr('refY', 0)
-        .attr('markerWidth', 6)
-        .attr('markerHeight', 6)
-        .attr('orient', 'auto')
-        .append('path')
-        .attr('d', 'M0,-5L10,0L0,5')
-        .attr('fill', '#667eea');
-
-    // Create links
-    const link = container.append('g')
-        .selectAll('line')
-        .data(links)
-        .enter()
-        .append('line')
-        .attr('stroke', '#667eea')
-        .attr('stroke-width', 2)
-        .attr('marker-end', 'url(#arrow)')
-        .attr('stroke-opacity', 0.6);
-
-    // Create node groups
-    const node = container.append('g')
-        .selectAll('g')
-        .data(nodes)
-        .enter()
-        .append('g')
-        .call(d3.drag()
-            .on('start', dragStarted)
-            .on('drag', dragged)
-            .on('end', dragEnded))
-        .on('click', (event, d) => {
-            event.stopPropagation();
-            showNodeDetails(d.id);
-        })
-        .style('cursor', 'pointer');
-
-    // Add circles to nodes
-    node.append('circle')
-        .attr('r', 25)
-        .attr('fill', d => getNodeColor(d.hops))
-        .attr('stroke', '#667eea')
-        .attr('stroke-width', 3);
-
-    // Add labels to nodes
-    node.append('text')
-        .text(d => d.label.length > 15 ? d.label.substring(0, 12) + '...' : d.label)
-        .attr('text-anchor', 'middle')
-        .attr('dy', '.35em')
-        .attr('fill', '#ffffff')
-        .attr('font-size', '12px')
-        .attr('font-weight', '600')
-        .attr('pointer-events', 'none');
-
-    // Add tooltips
-    node.append('title')
-        .text(d => `${d.label}\nHops: ${d.hops === 99 ? 'Unknown' : d.hops}\nBattery: ${d.battery || 'N/A'}%`);
-
-    // Update positions on each tick
-    simulation.on('tick', () => {
-        link
-            .attr('x1', d => d.source.x)
-            .attr('y1', d => d.source.y)
-            .attr('x2', d => d.target.x)
-            .attr('y2', d => d.target.y);
-
-        node
-            .attr('transform', d => `translate(${d.x},${d.y})`);
-    });
-
-    // Drag functions
-    function dragStarted(event, d) {
-        if (!event.active) simulation.alphaTarget(0.3).restart();
-        d.fx = d.x;
-        d.fy = d.y;
-    }
-
-    function dragged(event, d) {
-        d.fx = event.x;
-        d.fy = event.y;
-    }
-
-    function dragEnded(event, d) {
-        if (!event.active) simulation.alphaTarget(0);
-        d.fx = null;
-        d.fy = null;
-    }
-
-    // Show info summary
-    const directNodes = topologyData.nodes.filter(n => n.hops === 0).length;
-    const oneHopNodes = topologyData.nodes.filter(n => n.hops === 1).length;
-    const multiHopNodes = topologyData.nodes.filter(n => n.hops > 1 && n.hops < 99).length;
-
-    infoContainer.innerHTML = `
-        <div style="padding: 15px; background: #f8f9fa; border-radius: 8px; margin-top: 15px;">
-            <h4 style="margin-top: 0; color: #667eea;">Network Summary</h4>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
-                <div style="padding: 10px; background: white; border-radius: 4px; border-left: 4px solid #28a745;">
-                    <strong>Direct (0 hops):</strong> ${directNodes}
-                </div>
-                <div style="padding: 10px; background: white; border-radius: 4px; border-left: 4px solid #ffc107;">
-                    <strong>1 Hop Away:</strong> ${oneHopNodes}
-                </div>
-                <div style="padding: 10px; background: white; border-radius: 4px; border-left: 4px solid #dc3545;">
-                    <strong>2+ Hops Away:</strong> ${multiHopNodes}
+        infoContainer.innerHTML = `
+            <div style="padding: 15px; background: #f8f9fa; border-radius: 8px; margin-top: 15px;">
+                <h4 style="margin-top: 0; color: #667eea;">Network Summary</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                    <div style="padding: 10px; background: white; border-radius: 4px; border-left: 4px solid #28a745;">
+                        <strong>Direct (0 hops):</strong> ${directNodes}
+                    </div>
+                    <div style="padding: 10px; background: white; border-radius: 4px; border-left: 4px solid #ffc107;">
+                        <strong>1 Hop Away:</strong> ${oneHopNodes}
+                    </div>
+                    <div style="padding: 10px; background: white; border-radius: 4px; border-left: 4px solid #dc3545;">
+                        <strong>2+ Hops Away:</strong> ${multiHopNodes}
+                    </div>
                 </div>
             </div>
-        </div>
-    `;
+        `;
+
+        console.log('Topology graph rendered successfully');
+
+    } catch (error) {
+        console.error('Error rendering topology:', error);
+        graphContainer.innerHTML = `<p class="info-message" style="color: #dc3545;">Error rendering graph: ${error.message}</p>`;
+    }
 }
 
 // Initialize Map
