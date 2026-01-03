@@ -659,16 +659,29 @@ function renderTopology() {
 
         // Create links
         const link = container.append('g')
+            .attr('class', 'links')
             .selectAll('line')
             .data(links)
             .enter()
             .append('line')
             .attr('stroke', '#667eea')
-            .attr('stroke-width', 2)
+            .attr('stroke-width', 3)
             .attr('marker-end', 'url(#arrow)')
-            .attr('stroke-opacity', 0.6);
+            .attr('stroke-opacity', 0.8);
 
         console.log('Links created:', link.size());
+        console.log('Link data:', links);
+
+        // Debug: Check link coordinates after first tick
+        setTimeout(() => {
+            link.each(function(d) {
+                const x1 = d3.select(this).attr('x1');
+                const y1 = d3.select(this).attr('y1');
+                const x2 = d3.select(this).attr('x2');
+                const y2 = d3.select(this).attr('y2');
+                console.log('Link:', d.source.id, '->', d.target.id, `(${x1},${y1}) -> (${x2},${y2})`);
+            });
+        }, 1000);
 
         // Drag functions (defined before use)
         function dragStarted(event, d) {

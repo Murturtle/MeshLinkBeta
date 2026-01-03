@@ -412,6 +412,16 @@ tr:hover {
     r: 28;
 }
 
+#topology-graph line {
+    stroke: #667eea !important;
+    stroke-width: 3 !important;
+    stroke-opacity: 0.8 !important;
+}
+
+#topology-graph .links {
+    pointer-events: none;
+}
+
 #topology-info {
     position: relative;
     z-index: 10;
