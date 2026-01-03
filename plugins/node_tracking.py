@@ -51,7 +51,8 @@ class NodeTracking(plugins.Base):
                 'POSITION_APP',
                 'NODEINFO_APP',
                 'TELEMETRY_APP',
-                'ROUTING_APP'
+                'ROUTING_APP',
+                'TRACEROUTE_APP'
             ],
             'topology': {
                 'enabled': True,
@@ -112,7 +113,11 @@ class NodeTracking(plugins.Base):
             # Update topology if enabled
             if NodeTracking._config.get('topology', {}).get('enabled', True):
                 self._update_topology(packet, interface)
-            
+
+            # Process traceroute packets for detailed topology
+            if portnum == 'TRACEROUTE_APP':
+                self._process_traceroute(packet, interface)
+
             # Auto-export if enabled
             if NodeTracking._config.get('auto_export_json', False):
                 current_time = time.time()
@@ -335,7 +340,17 @@ class NodeTracking(plugins.Base):
             # Extract text message if TEXT_MESSAGE_APP
             if decoded.get('portnum') == 'TEXT_MESSAGE_APP':
                 packet_data['message_text'] = decoded.get('text')
-            
+
+            # Extract traceroute data if TRACEROUTE_APP
+            if decoded.get('portnum') == 'TRACEROUTE_APP':
+                traceroute = decoded.get('traceroute', {})
+                route = traceroute.get('route', [])
+                if route:
+                    # Store the route as JSON
+                    import json
+                    packet_data['message_text'] = f"Traceroute: {len(route)} hops"
+                    # Store full route in raw_packet field (already serialized)
+
             return packet_data
             
         except Exception as e:
@@ -382,18 +397,18 @@ class NodeTracking(plugins.Base):
             source_id = packet.get('fromId')
             if not source_id:
                 return
-            
+
             # If packet has hop information, we can infer it came through network
             hop_start = packet.get('hopStart')
             hop_limit = packet.get('hopLimit')
-            
+
             if hop_start and hop_limit:
                 hops_away = hop_start - hop_limit
-                
+
                 # If hops_away > 0, packet was relayed
                 # For now, we'll track source -> our node link
                 # In future, we could try to infer intermediate hops
-                
+
                 my_node_id = interface.getMyNodeInfo().get('user', {}).get('id')
                 if my_node_id and source_id != my_node_id:
                     # Update link from source to us
@@ -404,14 +419,75 @@ class NodeTracking(plugins.Base):
                         rssi=packet.get('rxRssi'),
                         hop_count=hops_away
                     )
-            
+
             # If via MQTT, track MQTT gateway as neighbor
             if packet.get('viaMqtt'):
                 # Could track MQTT gateway here if we knew its node_id
                 pass
-                
+
         except Exception as e:
             logger.warn(f"Error updating topology: {e}")
+
+    def _process_traceroute(self, packet: Dict[str, Any], interface):
+        """Process traceroute packets to build detailed topology"""
+        try:
+            decoded = packet.get('decoded', {})
+            traceroute = decoded.get('traceroute', {})
+
+            # Get the route from the traceroute packet
+            route = traceroute.get('route', [])
+
+            if not route or len(route) < 2:
+                logger.info("Traceroute packet has no usable route data")
+                return
+
+            logger.infogreen(f"Processing traceroute with {len(route)} hops")
+
+            # Convert node numbers to node IDs
+            route_ids = []
+            for node_num in route:
+                # Try to find the node ID from the interface's node database
+                node_info = None
+                if hasattr(interface, 'nodes') and interface.nodes:
+                    node_info = interface.nodes.get(node_num)
+
+                if node_info:
+                    node_id = node_info.get('user', {}).get('id')
+                    if node_id:
+                        route_ids.append(node_id)
+                    else:
+                        # Fallback: construct ID from node number
+                        route_ids.append(f"!{node_num:08x}")
+                else:
+                    # Node not in database yet, construct ID
+                    route_ids.append(f"!{node_num:08x}")
+
+            # Process each hop in the route
+            for i in range(len(route_ids) - 1):
+                source_id = route_ids[i]
+                target_id = route_ids[i + 1]
+
+                # Get SNR/RSSI if available (some traceroute implementations include this)
+                snr = traceroute.get('snr', [None] * len(route))[i] if traceroute.get('snr') else None
+                rssi = None  # Not typically in traceroute, but could be added
+
+                # Update topology link for this hop
+                NodeTracking._db.update_topology(
+                    source_id,
+                    target_id,
+                    snr=snr,
+                    rssi=rssi,
+                    hop_count=1  # Each link in traceroute is 1 hop
+                )
+
+                logger.info(f"  Traceroute hop {i+1}: {source_id} -> {target_id}")
+
+            logger.infogreen(f"Traceroute processed: {' -> '.join([rid[-4:] for rid in route_ids])}")
+
+        except Exception as e:
+            logger.warn(f"Error processing traceroute: {e}")
+            import traceback
+            traceback.print_exc()
     
     def _export_data(self):
         """Export data to JSON"""
