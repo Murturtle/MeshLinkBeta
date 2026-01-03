@@ -221,21 +221,27 @@ class NodeTracking(plugins.Base):
 
                 # Extract last byte of this node's number
                 # relayNode contains the last 8 bits of the node number
-                last_byte = node_num & 0xFF
+                # Ensure node_num is an integer (might be string in some cases)
+                try:
+                    node_num_int = int(node_num) if isinstance(node_num, str) else node_num
+                except (ValueError, TypeError):
+                    continue
+
+                last_byte = node_num_int & 0xFF
 
                 if last_byte == (partial_id & 0xFF):
                     # Found a match!
                     user = node_info.get('user', {})
-                    node_name = user.get('longName') or user.get('shortName') or node_id or f"!{node_num:08x}"
+                    node_name = user.get('longName') or user.get('shortName') or node_id or f"!{node_num_int:08x}"
 
                     # Get additional info for heuristics
                     snr = node_info.get('snr', -999)
                     last_heard = node_info.get('lastHeard', 0)
 
                     matches.append({
-                        'id': node_id or f"!{node_num:08x}",
+                        'id': node_id or f"!{node_num_int:08x}",
                         'name': node_name,
-                        'num': node_num,
+                        'num': node_num_int,
                         'snr': snr,
                         'last_heard': last_heard
                     })
