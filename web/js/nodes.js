@@ -531,6 +531,11 @@ async function loadTopology() {
         const response = await fetch(`${API_BASE}/api/topology/hop-graph`);
         const data = await response.json();
 
+        console.log('API Response:', data);
+        console.log('Nodes received:', data.nodes?.length);
+        console.log('Edges received:', data.edges?.length);
+        console.log('Raw edges:', data.edges);
+
         if (data.success) {
             topologyData = data;
             renderTopology();
