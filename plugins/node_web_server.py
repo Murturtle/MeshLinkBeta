@@ -230,16 +230,22 @@ class NodeWebServer(plugins.Base):
                     node_id = node['node_id']
 
                     # Get recent packets from this node to determine hop count
-                    packets = self.db.get_node_packets(node_id, limit=10)
+                    packets = self.db.get_node_packets(node_id, limit=20)
 
-                    # Determine minimum hop count from this node
+                    # Determine minimum hop count and relay node
                     min_hops = None
                     relay_via = None
 
                     for pkt in packets:
-                        if pkt.get('hops_away') is not None:
-                            if min_hops is None or pkt['hops_away'] < min_hops:
-                                min_hops = pkt['hops_away']
+                        hops = pkt.get('hops_away')
+                        if hops is not None:
+                            # Track minimum hop count
+                            if min_hops is None or hops < min_hops:
+                                min_hops = hops
+
+                            # Get relay_via from most recent packet with hops > 0
+                            # (not from the minimum hop packet, since that might be direct)
+                            if hops > 0 and relay_via is None:
                                 relay_via = pkt.get('relay_node_id')
 
                     # Add node to graph
