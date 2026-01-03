@@ -571,10 +571,11 @@ function renderTopology() {
 
     // Helper function to get node color based on hop count
     function getNodeColor(hops) {
-        if (hops === 0) return '#28a745';  // Green - direct
-        if (hops === 1) return '#ffc107';  // Yellow - 1 hop
-        if (hops < 99) return '#dc3545';   // Red - 2+ hops
-        return '#6c757d';                   // Gray - unknown
+        if (hops === -1) return '#667eea';  // Purple - local node (self)
+        if (hops === 0) return '#28a745';   // Green - direct
+        if (hops === 1) return '#ffc107';   // Yellow - 1 hop
+        if (hops < 99) return '#dc3545';    // Red - 2+ hops
+        return '#6c757d';                    // Gray - unknown
     }
 
     try {
@@ -636,7 +637,7 @@ function renderTopology() {
             .force('charge', d3.forceManyBody()
                 .strength(-400))
             .force('center', d3.forceCenter(width / 2, height / 2))
-            .force('collision', d3.forceCollide().radius(50));
+            .force('collision', d3.forceCollide().radius(d => d.hops === -1 ? 60 : 50));
 
         topologySimulation = simulation;
 
@@ -705,12 +706,12 @@ function renderTopology() {
 
         console.log('Nodes created:', node.size());
 
-        // Add circles to nodes
+        // Add circles to nodes (local node is larger)
         node.append('circle')
-            .attr('r', 25)
+            .attr('r', d => d.hops === -1 ? 35 : 25)
             .attr('fill', d => getNodeColor(d.hops))
-            .attr('stroke', '#667eea')
-            .attr('stroke-width', 3);
+            .attr('stroke', d => d.hops === -1 ? '#764ba2' : '#667eea')
+            .attr('stroke-width', d => d.hops === -1 ? 4 : 3);
 
         // Add labels to nodes
         node.append('text')
@@ -738,15 +739,19 @@ function renderTopology() {
                 .attr('transform', d => `translate(${d.x},${d.y})`);
         });
 
-        // Show info summary
+        // Show info summary (exclude local node from counts)
         const directNodes = topologyData.nodes.filter(n => n.hops === 0).length;
         const oneHopNodes = topologyData.nodes.filter(n => n.hops === 1).length;
         const multiHopNodes = topologyData.nodes.filter(n => n.hops > 1 && n.hops < 99).length;
+        const totalNodes = directNodes + oneHopNodes + multiHopNodes;
 
         infoContainer.innerHTML = `
             <div style="padding: 15px; background: #f8f9fa; border-radius: 8px; margin-top: 15px;">
                 <h4 style="margin-top: 0; color: #667eea;">Network Summary</h4>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                    <div style="padding: 10px; background: white; border-radius: 4px; border-left: 4px solid #667eea;">
+                        <strong>Local Device:</strong> Self
+                    </div>
                     <div style="padding: 10px; background: white; border-radius: 4px; border-left: 4px solid #28a745;">
                         <strong>Direct (0 hops):</strong> ${directNodes}
                     </div>
@@ -755,6 +760,9 @@ function renderTopology() {
                     </div>
                     <div style="padding: 10px; background: white; border-radius: 4px; border-left: 4px solid #dc3545;">
                         <strong>2+ Hops Away:</strong> ${multiHopNodes}
+                    </div>
+                    <div style="padding: 10px; background: white; border-radius: 4px; border-left: 4px solid #667eea;">
+                        <strong>Total Nodes:</strong> ${totalNodes}
                     </div>
                 </div>
             </div>

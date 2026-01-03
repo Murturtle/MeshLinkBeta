@@ -213,9 +213,17 @@ class NodeWebServer(plugins.Base):
                 # Build hop-based graph
                 graph_nodes = []
                 graph_edges = []
+                direct_nodes = []
 
-                # Identify local node (the one we're connected to)
-                local_node_id = None  # This would be our node - we'll infer it
+                # Add a virtual "Self" node representing the local device
+                graph_nodes.append({
+                    'id': 'LOCAL_NODE',
+                    'label': 'Self (This Device)',
+                    'hops': -1,  # Special marker for local node
+                    'battery': None,
+                    'lastSeen': None,
+                    'relay_via': None
+                })
 
                 # Process each node
                 for node in nodes:
@@ -244,8 +252,17 @@ class NodeWebServer(plugins.Base):
                         'relay_via': relay_via
                     })
 
-                    # Add edge if relayed through another node
-                    if relay_via and min_hops and min_hops > 0:
+                    # Create edges based on hop count
+                    if min_hops == 0:
+                        # Direct connection to local node
+                        direct_nodes.append(node_id)
+                        graph_edges.append({
+                            'from': 'LOCAL_NODE',
+                            'to': node_id,
+                            'hops': 0
+                        })
+                    elif relay_via and min_hops and min_hops > 0:
+                        # Relayed through another node
                         graph_edges.append({
                             'from': relay_via,
                             'to': node_id,
