@@ -298,11 +298,15 @@ class NodeTracking(plugins.Base):
             if relay_node_partial is not None and packet_data.get('hops_away', 0) > 0:
                 matched_relay = self._match_relay_node(relay_node_partial, interface, node_id)
                 if matched_relay:
-                    packet_data['relay_node_id'] = matched_relay['id']
-                    packet_data['relay_node_name'] = matched_relay['name']
-                    logger.info(f"Packet from {node_id} relayed via {matched_relay['name']} (matched {relay_node_partial:#x})")
+                    # Validate that we got a full node ID (starts with !)
+                    matched_id = matched_relay['id']
+                    if isinstance(matched_id, str) and matched_id.startswith('!'):
+                        packet_data['relay_node_id'] = matched_id
+                        packet_data['relay_node_name'] = matched_relay['name']
+                        logger.info(f"Packet from {node_id} relayed via {matched_relay['name']} (matched {relay_node_partial:#x})")
+                    else:
+                        logger.warn(f"Matched relay node has invalid ID format: {matched_id} for packet from {node_id}")
                 else:
-                    # Store partial ID for debugging
                     logger.warn(f"Could not match relay node {relay_node_partial:#x} for packet from {node_id}")
             
             # Extract position if POSITION_APP

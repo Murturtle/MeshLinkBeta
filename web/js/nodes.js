@@ -634,15 +634,32 @@ function renderTopology() {
         const nodes = Array.from(nodeMap.values());
         console.log('Nodes for simulation:', nodes.length, 'Links:', links.length, 'Filtered out:', topologyData.edges.length - links.length);
 
-        // Create force simulation
+        // Set initial positions in radial layout based on hop count
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const radiusStep = 120; // Distance between each hop ring
+
+        nodes.forEach((node, i) => {
+            const radius = (node.hops + 1) * radiusStep; // Self is at center (hops=-1)
+            const angle = (i / nodes.length) * 2 * Math.PI;
+            node.x = centerX + radius * Math.cos(angle);
+            node.y = centerY + radius * Math.sin(angle);
+        });
+
+        // Create force simulation with radial constraint
         const simulation = d3.forceSimulation(nodes)
             .force('link', d3.forceLink(links)
                 .id(d => d.id)
-                .distance(150))
+                .distance(100)
+                .strength(0.3))
             .force('charge', d3.forceManyBody()
-                .strength(-400))
-            .force('center', d3.forceCenter(width / 2, height / 2))
-            .force('collision', d3.forceCollide().radius(d => d.hops === -1 ? 60 : 50));
+                .strength(-200))
+            .force('collision', d3.forceCollide().radius(d => d.hops === -1 ? 60 : 50))
+            .force('radial', d3.forceRadial(
+                d => (d.hops + 1) * radiusStep,
+                centerX,
+                centerY
+            ).strength(0.8));
 
         topologySimulation = simulation;
 
