@@ -271,7 +271,8 @@ class NodeWebServer(plugins.Base):
                                 'hops': min_hops
                             })
                         else:
-                            logger.debug(f"Skipping edge for {node_id}: relay_via '{relay_via}' is not a valid node ID")
+                            # Skip invalid relay IDs (partial IDs from relay matching)
+                            pass
 
                 return jsonify({
                     'success': True,
