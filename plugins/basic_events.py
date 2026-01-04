@@ -64,7 +64,12 @@ class basicEvents(plugins.Base):
                     if cfg.config["verbose_packets"]:
                         logger.info("Ignoring self")
                 else:
-                    final_message += DiscordUtil.genUserName(interface, packet) + "> " + str(portnum)
+                    packet_id = packet.get("id")
+                    if packet_id is not None:
+                        port_link = f"[{portnum}](https://malla.pdxlocs.fun/packet/{packet_id})"
+                    else:
+                        port_link = str(portnum)
+                    final_message += DiscordUtil.genUserName(interface, packet) + "> " + port_link
             except TypeError as e:
                 logger.infoimportant(f"TypeError: {e}. We don't have our own nodenum yet.")
 
