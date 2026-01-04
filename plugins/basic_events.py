@@ -39,6 +39,7 @@ class basicEvents(plugins.Base):
                 send_channel = int(packet["channel"])
             final_message += DiscordUtil.genUserName(interface, packet, details=False)
             text = packet["decoded"]["text"]
+            reply_id = packet["decoded"].get("replyId") or packet["decoded"].get("reply_id")
 
             if packet.get("from") is not None:
                 logger.infogreen(f"{packet['fromId']}> {text}")
@@ -53,7 +54,7 @@ class basicEvents(plugins.Base):
             if cfg.config["ping_on_messages"]:
                 final_message += " ||" + cfg.config["message_role"] + "||"
 
-            DiscordUtil.send_msg(final_message, client, cfg.config, send_channel)
+            DiscordUtil.send_msg(final_message, client, cfg.config, send_channel, packet.get("id"), reply_id)
             return
 
         if cfg.config["send_packets"]:
