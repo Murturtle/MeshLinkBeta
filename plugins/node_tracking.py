@@ -547,7 +547,19 @@ class NodeTracking(plugins.Base):
 
                 logger.info(f"  Traceroute hop {i+1}: {source_id} -> {target_id}")
 
-            logger.infogreen(f"Traceroute processed: {' -> '.join([rid[-4:] for rid in route_ids])}")
+            # Store the complete traceroute in the database
+            from_node_id = packet.get('fromId')
+            to_node_id = packet.get('toId')  # Destination, if available
+            snr_data = traceroute.get('snr') if traceroute.get('snr') else None
+
+            NodeTracking._db.insert_traceroute(
+                from_node_id=from_node_id,
+                to_node_id=to_node_id,
+                route_ids=route_ids,
+                snr_data=snr_data
+            )
+
+            logger.infogreen(f"Traceroute stored: {len(route_ids)} nodes, {' -> '.join([rid[-4:] for rid in route_ids])}")
 
         except Exception as e:
             logger.warn(f"Error processing traceroute: {e}")

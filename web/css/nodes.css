@@ -89,6 +89,12 @@ header h1 {
     border-bottom: 3px solid #667eea;
 }
 
+.tab-btn.tab-link {
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+
 /* Tab Content */
 .tab-content {
     display: none;
@@ -501,3 +507,156 @@ tr:hover {
 .mt-20 { margin-top: 20px; }
 .mb-20 { margin-bottom: 20px; }
 .hidden { display: none; }
+
+/* Traceroutes Page Styles */
+.route-path {
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 0.9em;
+    max-width: 400px;
+}
+
+.route-path code {
+    background: #f4f4f4;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    line-height: 1.6;
+}
+
+td.center {
+    text-align: center;
+}
+
+.loading, .no-data, .error {
+    text-align: center;
+    padding: 40px !important;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.error {
+    color: #dc3545;
+}
+
+/* Connections Page Styles */
+.connections-container {
+    padding: 20px;
+}
+
+.node-connections-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.3s ease;
+}
+
+.node-connections-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.node-header {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.node-header h3 {
+    margin: 0;
+    color: #333;
+    font-size: 1.2em;
+}
+
+.node-info {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.badge {
+    background: #667eea;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    font-weight: 500;
+}
+
+.connection-count {
+    background: #28a745;
+}
+
+.connections-list {
+    padding: 15px 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 15px;
+}
+
+.connection-item {
+    background: #f8f9fa;
+    padding: 12px;
+    border-radius: 6px;
+    border-left: 4px solid #667eea;
+    transition: transform 0.2s ease;
+}
+
+.connection-item:hover {
+    transform: translateX(5px);
+}
+
+.connection-item.quality-high {
+    border-left-color: #28a745;
+}
+
+.connection-item.quality-medium {
+    border-left-color: #ffc107;
+}
+
+.connection-item.quality-low {
+    border-left-color: #dc3545;
+}
+
+.connection-node {
+    margin-bottom: 8px;
+}
+
+.connection-node strong {
+    color: #333;
+    font-size: 1em;
+}
+
+.connection-node small {
+    color: #6c757d;
+    font-size: 0.85em;
+}
+
+.connection-stats {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.connection-stats .badge {
+    background: #e9ecef;
+    color: #495057;
+    font-size: 0.75em;
+    padding: 3px 8px;
+}
+
+@media (max-width: 768px) {
+    .node-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .connections-list {
+        grid-template-columns: 1fr;
+    }
+}

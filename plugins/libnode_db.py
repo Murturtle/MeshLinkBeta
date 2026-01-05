@@ -119,12 +119,31 @@ class NodeDatabase:
                 )
             """)
             
+            # Create traceroutes table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS traceroutes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    from_node_id TEXT NOT NULL,
+                    to_node_id TEXT,
+                    route_json TEXT NOT NULL,
+                    hop_count INTEGER NOT NULL,
+                    received_at_utc TEXT NOT NULL,
+                    snr_data TEXT,
+                    packet_id INTEGER,
+                    FOREIGN KEY (from_node_id) REFERENCES nodes(node_id),
+                    FOREIGN KEY (to_node_id) REFERENCES nodes(node_id),
+                    FOREIGN KEY (packet_id) REFERENCES packet_history(id)
+                )
+            """)
+
             # Create indexes
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_packet_node ON packet_history(node_id)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_packet_time ON packet_history(received_at_utc)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_topology_source ON network_topology(source_node_id)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_topology_neighbor ON network_topology(neighbor_node_id)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_topology_active ON network_topology(is_active)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_traceroute_from ON traceroutes(from_node_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_traceroute_time ON traceroutes(received_at_utc)")
             
             conn.commit()
             logger.infogreen("Node tracking database initialized successfully")
@@ -482,6 +501,131 @@ class NodeDatabase:
             logger.warn(f"Failed to get statistics: {e}")
             return {}
     
+    def insert_traceroute(self, from_node_id: str, route_ids: List[str],
+                          to_node_id: Optional[str] = None, snr_data: Optional[List[float]] = None,
+                          packet_id: Optional[int] = None) -> bool:
+        """Insert a traceroute record"""
+        try:
+            conn = self._get_connection()
+            cursor = conn.cursor()
+
+            now = datetime.utcnow().isoformat()
+            route_json = json.dumps(route_ids)
+            snr_json = json.dumps(snr_data) if snr_data else None
+            hop_count = len(route_ids) - 1  # Hops = number of links between nodes
+
+            cursor.execute("""
+                INSERT INTO traceroutes (from_node_id, to_node_id, route_json, hop_count,
+                                        received_at_utc, snr_data, packet_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (from_node_id, to_node_id, route_json, hop_count, now, snr_json, packet_id))
+
+            conn.commit()
+            return True
+
+        except Exception as e:
+            logger.warn(f"Failed to insert traceroute: {e}")
+            return False
+
+    def get_all_traceroutes(self, limit: int = 100) -> List[Dict[str, Any]]:
+        """Get all traceroutes ordered by most recent"""
+        try:
+            conn = self._get_connection()
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                SELECT t.*,
+                       fn.long_name as from_long_name, fn.short_name as from_short_name,
+                       tn.long_name as to_long_name, tn.short_name as to_short_name
+                FROM traceroutes t
+                LEFT JOIN nodes fn ON t.from_node_id = fn.node_id
+                LEFT JOIN nodes tn ON t.to_node_id = tn.node_id
+                ORDER BY t.received_at_utc DESC
+                LIMIT ?
+            """, (limit,))
+
+            rows = cursor.fetchall()
+            result = []
+
+            for row in rows:
+                trace = dict(row)
+                # Parse JSON fields
+                trace['route'] = json.loads(trace['route_json'])
+                if trace['snr_data']:
+                    trace['snr_data'] = json.loads(trace['snr_data'])
+                result.append(trace)
+
+            return result
+
+        except Exception as e:
+            logger.warn(f"Failed to get traceroutes: {e}")
+            return []
+
+    def get_traceroute(self, traceroute_id: int) -> Optional[Dict[str, Any]]:
+        """Get a specific traceroute by ID"""
+        try:
+            conn = self._get_connection()
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                SELECT t.*,
+                       fn.long_name as from_long_name, fn.short_name as from_short_name,
+                       tn.long_name as to_long_name, tn.short_name as to_short_name
+                FROM traceroutes t
+                LEFT JOIN nodes fn ON t.from_node_id = fn.node_id
+                LEFT JOIN nodes tn ON t.to_node_id = tn.node_id
+                WHERE t.id = ?
+            """, (traceroute_id,))
+
+            row = cursor.fetchone()
+            if not row:
+                return None
+
+            trace = dict(row)
+            trace['route'] = json.loads(trace['route_json'])
+            if trace['snr_data']:
+                trace['snr_data'] = json.loads(trace['snr_data'])
+
+            return trace
+
+        except Exception as e:
+            logger.warn(f"Failed to get traceroute {traceroute_id}: {e}")
+            return None
+
+    def get_traceroutes_by_node(self, node_id: str, limit: int = 50) -> List[Dict[str, Any]]:
+        """Get all traceroutes involving a specific node (as source, destination, or in route)"""
+        try:
+            conn = self._get_connection()
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                SELECT t.*,
+                       fn.long_name as from_long_name, fn.short_name as from_short_name,
+                       tn.long_name as to_long_name, tn.short_name as to_short_name
+                FROM traceroutes t
+                LEFT JOIN nodes fn ON t.from_node_id = fn.node_id
+                LEFT JOIN nodes tn ON t.to_node_id = tn.node_id
+                WHERE t.from_node_id = ? OR t.to_node_id = ? OR t.route_json LIKE ?
+                ORDER BY t.received_at_utc DESC
+                LIMIT ?
+            """, (node_id, node_id, f'%{node_id}%', limit))
+
+            rows = cursor.fetchall()
+            result = []
+
+            for row in rows:
+                trace = dict(row)
+                trace['route'] = json.loads(trace['route_json'])
+                if trace['snr_data']:
+                    trace['snr_data'] = json.loads(trace['snr_data'])
+                result.append(trace)
+
+            return result
+
+        except Exception as e:
+            logger.warn(f"Failed to get traceroutes for node {node_id}: {e}")
+            return []
+
     def close(self):
         """Close database connection"""
         if hasattr(_thread_local, 'connection'):

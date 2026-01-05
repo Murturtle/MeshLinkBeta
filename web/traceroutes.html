@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeshLink Traceroutes</title>
+    <link rel="stylesheet" href="css/nodes.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛤️ MeshLink Traceroutes</h1>
+            <div class="stats-bar">
+                <div class="stat">
+                    <span class="stat-label">Total Traceroutes:</span>
+                    <span id="stat-total-traceroutes" class="stat-value">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Unique Routes:</span>
+                    <span id="stat-unique-routes" class="stat-value">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Avg Hops:</span>
+                    <span id="stat-avg-hops" class="stat-value">0</span>
+                </div>
+            </div>
+        </header>
+
+        <nav class="tab-nav">
+            <a href="/" class="tab-btn">📋 Node List</a>
+            <a href="/traceroutes.html" class="tab-btn active">🛤️ Traceroutes</a>
+            <a href="/connections.html" class="tab-btn">🔗 Connections</a>
+        </nav>
+
+        <div class="tab-content active">
+            <div class="controls">
+                <input type="text" id="search" placeholder="🔍 Search traceroutes..." class="search-box">
+                <select id="limit-select" class="filter-select">
+                    <option value="50">Show 50</option>
+                    <option value="100" selected>Show 100</option>
+                    <option value="200">Show 200</option>
+                    <option value="500">Show 500</option>
+                </select>
+                <button id="refresh-btn" class="refresh-btn">🔄 Refresh</button>
+            </div>
+
+            <div class="table-container">
+                <table id="traceroutes-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>From</th>
+                            <th>To</th>
+                            <th>Hops</th>
+                            <th>Route</th>
+                            <th>Signal Quality</th>
+                            <th>Received</th>
+                        </tr>
+                    </thead>
+                    <tbody id="traceroutes-tbody">
+                        <tr>
+                            <td colspan="7" class="loading">Loading traceroutes...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/traceroutes.js"></script>
+</body>
+</html>

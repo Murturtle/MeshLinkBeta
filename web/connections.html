@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeshLink Node Connections</title>
+    <link rel="stylesheet" href="css/nodes.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔗 MeshLink Node Connections</h1>
+            <div class="stats-bar">
+                <div class="stat">
+                    <span class="stat-label">Total Nodes:</span>
+                    <span id="stat-total-nodes" class="stat-value">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Active Links:</span>
+                    <span id="stat-active-links" class="stat-value">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Avg Connections:</span>
+                    <span id="stat-avg-connections" class="stat-value">0</span>
+                </div>
+            </div>
+        </header>
+
+        <nav class="tab-nav">
+            <a href="/" class="tab-btn">📋 Node List</a>
+            <a href="/traceroutes.html" class="tab-btn">🛤️ Traceroutes</a>
+            <a href="/connections.html" class="tab-btn active">🔗 Connections</a>
+        </nav>
+
+        <div class="tab-content active">
+            <div class="controls">
+                <input type="text" id="search" placeholder="🔍 Search nodes..." class="search-box">
+                <select id="filter-connections" class="filter-select">
+                    <option value="">All Nodes</option>
+                    <option value="connected">Connected Only</option>
+                    <option value="isolated">Isolated Nodes</option>
+                </select>
+                <button id="refresh-btn" class="refresh-btn">🔄 Refresh</button>
+            </div>
+
+            <div id="connections-container" class="connections-container">
+                <p class="loading">Loading node connections...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/connections.js"></script>
+</body>
+</html>

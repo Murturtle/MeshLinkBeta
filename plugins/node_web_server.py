@@ -347,7 +347,62 @@ class NodeWebServer(plugins.Base):
                     'success': False,
                     'error': str(e)
                 }), 500
-        
+
+        @self.app.route('/api/traceroutes', methods=['GET'])
+        def get_traceroutes():
+            """Get all traceroutes"""
+            try:
+                limit = int(request.args.get('limit', 100))
+                traceroutes = self.db.get_all_traceroutes(limit)
+                return jsonify({
+                    'success': True,
+                    'count': len(traceroutes),
+                    'traceroutes': traceroutes
+                })
+            except Exception as e:
+                return jsonify({
+                    'success': False,
+                    'error': str(e)
+                }), 500
+
+        @self.app.route('/api/traceroutes/<int:traceroute_id>', methods=['GET'])
+        def get_traceroute(traceroute_id):
+            """Get specific traceroute"""
+            try:
+                traceroute = self.db.get_traceroute(traceroute_id)
+                if traceroute:
+                    return jsonify({
+                        'success': True,
+                        'traceroute': traceroute
+                    })
+                else:
+                    return jsonify({
+                        'success': False,
+                        'error': 'Traceroute not found'
+                    }), 404
+            except Exception as e:
+                return jsonify({
+                    'success': False,
+                    'error': str(e)
+                }), 500
+
+        @self.app.route('/api/nodes/<node_id>/traceroutes', methods=['GET'])
+        def get_node_traceroutes(node_id):
+            """Get traceroutes involving a specific node"""
+            try:
+                limit = int(request.args.get('limit', 50))
+                traceroutes = self.db.get_traceroutes_by_node(node_id, limit)
+                return jsonify({
+                    'success': True,
+                    'count': len(traceroutes),
+                    'traceroutes': traceroutes
+                })
+            except Exception as e:
+                return jsonify({
+                    'success': False,
+                    'error': str(e)
+                }), 500
+
         # Start server in background thread
         host = self.config.get('host', '0.0.0.0')
         port = self.config.get('port', 8080)
