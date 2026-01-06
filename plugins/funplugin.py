@@ -41,6 +41,7 @@ quotes = [
     "The older you get, the more important it is to appreciate the little things. - Kirstie Alley",
     "Comedy is rooted in honesty. - Eric Stonestreet",
     "I embrace where I come from. - Eric Stonestreet",
+    "When I was a kid, I wanted to be a clown. I didn't want to be an actor, I wanted to join the circus and entertain people. - Eric Stonestreet",
     "Country music tells the truth about people's lives. - Martina McBride",
 
     # Sports
@@ -50,6 +51,8 @@ quotes = [
     # Infamous Kansans
     "I'm proud of this job. - John C. Woods",
     "Some people get a kick out of killing. I don't. - John C. Woods",
+    "Ten men in 103 minutes, that's fast work. - John C. Woods",
+    "I hanged those ten Nazis...and I am proud of it...I wasn't nervous. A fellow can't afford to have nerves in this business. - John C. Woods",
 
     # Regional & Historical Voices
     "Kansas is a good place to be from. - Langston Hughes",

@@ -47,10 +47,10 @@ class pluginInfo(plugins.Base):
 
 
             if page == 0:
-                final_info = f"""<- info ->
-Welcome to MeshLink!
-Use '{cfg.config["prefix"]}info <page>' to view different pages.
-This is page 0/{num_pages}"""
+                final_info = f"""Welcome to Flyover Mesh!
+Use '{cfg.config["prefix"]}info <page>' to view other pages.
+Use {cfg.config["prefix"]} before any command to interact with me.
+Page 0/{num_pages}"""
             
             else:
                 final_info = pages[page-1]

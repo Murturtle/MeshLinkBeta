@@ -22,8 +22,15 @@ class basicEvents(plugins.Base):
         final_message = ""
         send_channel = 0
         if "decoded" not in packet:
-            final_message += DiscordUtil.genUserName(interface, packet) + ": encrypted message"
-            DiscordUtil.send_info(final_message, client, cfg.config)
+            # Check if encrypted message is from ignored channels
+            encrypted_channel = int(packet["channel"]) if "channel" in packet else 0
+            ignored_channels = [1, 2, 3, 4, 5, 6, 7]
+
+            if encrypted_channel not in ignored_channels:
+                final_message += DiscordUtil.genUserName(interface, packet) + ": encrypted message"
+                DiscordUtil.send_info(final_message, client, cfg.config)
+            else:
+                logger.info(f"Skipping encrypted message notification for channel {encrypted_channel} (ignored)")
 
             if cfg.config["verbose_packets"]:
                 logger.infoimportant("Failed or encrypted")
@@ -45,15 +52,23 @@ class basicEvents(plugins.Base):
             else:
                 logger.infogreen("Unknown ID> " + text)
 
-            if text.lower() == "meshlink":
+            # Check if message is from ignored channels (1-7)
+            ignored_channels = [1, 2, 3, 4, 5, 6, 7]
+            is_ignored_channel = send_channel in ignored_channels
+
+            if text.lower() == "meshlink" and not is_ignored_channel:
                 LibMesh.sendReply("fl0v is running " + str(cfg.config["rev"]) + "\n\nuse " + cfg.config["prefix"] + "info for a list of commands", interface, packet)
 
-            title = f"From: {username}"
-            description = text
-            if cfg.config["ping_on_messages"]:
-                description += f"\n\n{cfg.config['message_role']}"
+            # Only send to Discord if not from ignored channels
+            if not is_ignored_channel:
+                title = f"From: {username}"
+                description = text
+                if cfg.config["ping_on_messages"]:
+                    description += f"\n\n{cfg.config['message_role']}"
 
-            DiscordUtil.send_embed(title, description, client, cfg.config, send_channel)
+                DiscordUtil.send_embed(title, description, client, cfg.config, send_channel)
+            else:
+                logger.info(f"Skipping Discord message for channel {send_channel} (ignored)")
             return
 
         if cfg.config["send_packets"]:
@@ -67,7 +82,13 @@ class basicEvents(plugins.Base):
             except TypeError as e:
                 logger.infoimportant(f"TypeError: {e}. We don't have our own nodenum yet.")
 
-        DiscordUtil.send_info(final_message, client, cfg.config)
+        # Check if packet is from ignored channels before sending to Discord
+        packet_channel = int(packet["channel"]) if "channel" in packet else 0
+        ignored_channels = [1, 2, 3, 4, 5, 6, 7]
+        if packet_channel not in ignored_channels:
+            DiscordUtil.send_info(final_message, client, cfg.config)
+        else:
+            logger.info(f"Skipping Discord info for channel {packet_channel} (ignored)")
                 
             
                 

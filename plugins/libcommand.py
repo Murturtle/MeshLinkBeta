@@ -36,6 +36,15 @@ class simpleCommand():
                     args = parts[1] if len(parts) > 1 else ""
 
                     if command_name == self.name:
+                        # Check if command is from ignored channels (1-7)
+                        send_channel = int(packet["channel"]) if "channel" in packet else 0
+                        ignored_channels = [1, 2, 3, 4, 5, 6, 7]
+                        is_ignored_channel = send_channel in ignored_channels
+
+                        if is_ignored_channel:
+                            logger.info(f"Skipping command '{command_name}' from channel {send_channel} (ignored)")
+                            return
+
                         reply = self.executeCommand(packet, interface, client, args)
                         LibMesh.sendReply(reply, interface, packet)
 

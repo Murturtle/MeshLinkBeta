@@ -16,7 +16,7 @@ class basicCommands(plugins.Base):
         pass
 
     def start(self):
-        logger.info("Loading basic commands")
+        logger.info("Loading environment commands")
 
         def getLatLong(packet, interface):
             lat, long, hasPos = LibMesh.getPosition(interface, packet)
@@ -30,43 +30,43 @@ class basicCommands(plugins.Base):
 
         
         # aqi command
-        def cmd_aqi(packet, interface, client, args):
-            lat, long, hasPos = getLatLong(packet, interface)
-            final = ""
-            aqi_data_res = requests.get(
-                f"https://air-quality-api.open-meteo.com/v1/air-quality?latitude={lat}&longitude={long}&current=us_aqi,us_aqi_pm2_5,us_aqi_pm10,us_aqi_nitrogen_dioxide,us_aqi_carbon_monoxide,us_aqi_ozone,us_aqi_sulphur_dioxide&timezone=auto&forecast_hours=1&past_hours=1&timeformat=unixtime"
-            )
-            aqi_data = aqi_data_res.json()
+        # def cmd_aqi(packet, interface, client, args):
+        #     lat, long, hasPos = getLatLong(packet, interface)
+        #     final = ""
+        #     aqi_data_res = requests.get(
+        #         f"https://air-quality-api.open-meteo.com/v1/air-quality?latitude={lat}&longitude={long}&current=us_aqi,us_aqi_pm2_5,us_aqi_pm10,us_aqi_nitrogen_dioxide,us_aqi_carbon_monoxide,us_aqi_ozone,us_aqi_sulphur_dioxide&timezone=auto&forecast_hours=1&past_hours=1&timeformat=unixtime"
+        #     )
+        #     aqi_data = aqi_data_res.json()
             
-            if aqi_data_res.ok:
-                final += f"AQI: {aqi_data['current']['us_aqi']}\n"
-                final += f"PM2.5: {aqi_data['current']['us_aqi_pm2_5']}\n"
-                final += f"PM10: {aqi_data['current']['us_aqi_pm10']}\n"
-                final += f"NO2: {aqi_data['current']['us_aqi_nitrogen_dioxide']}\n"
-                final += f"CO: {aqi_data['current']['us_aqi_carbon_monoxide']}\n"
-                final += f"O3: {aqi_data['current']['us_aqi_ozone']}\n"
-                final += f"SO2: {aqi_data['current']['us_aqi_sulphur_dioxide']}\n"
-                final += "(Your position)" if hasPos else "(Config position)" 
-            else:
-                final = "Error fetching"
-            logger.info(final)
-            return final
-        LibCommand.simpleCommand().registerCommand("aqi", "Gets the AQI", cmd_aqi)
+        #     if aqi_data_res.ok:
+        #         final += f"AQI: {aqi_data['current']['us_aqi']}\n"
+        #         final += f"PM2.5: {aqi_data['current']['us_aqi_pm2_5']}\n"
+        #         final += f"PM10: {aqi_data['current']['us_aqi_pm10']}\n"
+        #         final += f"NO2: {aqi_data['current']['us_aqi_nitrogen_dioxide']}\n"
+        #         final += f"CO: {aqi_data['current']['us_aqi_carbon_monoxide']}\n"
+        #         final += f"O3: {aqi_data['current']['us_aqi_ozone']}\n"
+        #         final += f"SO2: {aqi_data['current']['us_aqi_sulphur_dioxide']}\n"
+        #         final += "(Your position)" if hasPos else "(Config position)" 
+        #     else:
+        #         final = "Error fetching"
+        #     logger.info(final)
+        #     return final
+        # LibCommand.simpleCommand().registerCommand("aqi", "Gets the AQI", cmd_aqi)
 
         # hf command
-        def cmd_hf(packet, interface, client, args):
-            final = ""
-            solar = requests.get("https://www.hamqsl.com/solarxml.php")
-            if solar.ok:
-                solarxml = xml.dom.minidom.parseString(solar.text)
-                for i in solarxml.getElementsByTagName("band"):
-                    final += f"{i.getAttribute('time')[0]}{i.getAttribute('name')} {i.childNodes[0].data}\n"
-                final = final[:-1]
-            else:
-                final = "Error fetching"
-            logger.info(final)
-            return final
-        LibCommand.simpleCommand().registerCommand("hf", "Get HF radio conditions", cmd_hf)
+        # def cmd_hf(packet, interface, client, args):
+        #     final = ""
+        #     solar = requests.get("https://www.hamqsl.com/solarxml.php")
+        #     if solar.ok:
+        #         solarxml = xml.dom.minidom.parseString(solar.text)
+        #         for i in solarxml.getElementsByTagName("band"):
+        #             final += f"{i.getAttribute('time')[0]}{i.getAttribute('name')} {i.childNodes[0].data}\n"
+        #         final = final[:-1]
+        #     else:
+        #         final = "Error fetching"
+        #     logger.info(final)
+        #     return final
+        # LibCommand.simpleCommand().registerCommand("hf", "Get HF radio conditions", cmd_hf)
 
 
         # elevation command
