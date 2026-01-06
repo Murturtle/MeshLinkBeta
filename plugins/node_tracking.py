@@ -496,61 +496,67 @@ class NodeTracking(plugins.Base):
     def _process_traceroute(self, packet: Dict[str, Any], interface):
         """Process traceroute packets to build detailed topology"""
         try:
-            # Traceroute data is in the 'trace' field at the top level, not in 'decoded'
+            # Traceroute data can be in either 'trace' field (older format) or 'decoded.traceroute' (newer format)
             trace = packet.get('trace', {})
+            if not trace:
+                # Try the decoded.traceroute location
+                decoded = packet.get('decoded', {})
+                trace = decoded.get('traceroute', {})
 
-            # Get the route from the traceroute packet
+            # Get the route from the traceroute packet (may be empty for incomplete/in-progress traceroutes)
             route = trace.get('route', [])
 
-            if not route or len(route) < 2:
-                logger.info("Traceroute packet has no usable route data")
-                return
+            # Store ALL traceroutes, even incomplete ones
+            if route and len(route) >= 2:
+                logger.infogreen(f"Processing complete traceroute with {len(route)} hops")
+            else:
+                logger.info(f"Processing incomplete/partial traceroute (route: {route})")
 
-            logger.infogreen(f"Processing traceroute with {len(route)} hops")
-
-            # Convert node numbers to node IDs
+            # Convert node numbers to node IDs (only if we have a route)
             route_ids = []
-            for node_num in route:
-                # Try to find the node ID from the interface's node database
-                node_info = None
-                if hasattr(interface, 'nodes') and interface.nodes:
-                    node_info = interface.nodes.get(node_num)
+            if route:
+                for node_num in route:
+                    # Try to find the node ID from the interface's node database
+                    node_info = None
+                    if hasattr(interface, 'nodes') and interface.nodes:
+                        node_info = interface.nodes.get(node_num)
 
-                if node_info:
-                    node_id = node_info.get('user', {}).get('id')
-                    if node_id:
-                        route_ids.append(node_id)
+                    if node_info:
+                        node_id = node_info.get('user', {}).get('id')
+                        if node_id:
+                            route_ids.append(node_id)
+                        else:
+                            # Fallback: construct ID from node number
+                            route_ids.append(f"!{node_num:08x}")
                     else:
-                        # Fallback: construct ID from node number
+                        # Node not in database yet, construct ID
                         route_ids.append(f"!{node_num:08x}")
-                else:
-                    # Node not in database yet, construct ID
-                    route_ids.append(f"!{node_num:08x}")
 
-            # Process each hop in the route
             # Get SNR data - use snrTowards which shows signal from each hop
             snr_towards = trace.get('snrTowards', [])
 
-            for i in range(len(route_ids) - 1):
-                source_id = route_ids[i]
-                target_id = route_ids[i + 1]
+            # Process each hop in the route and update topology (only for complete routes)
+            if len(route_ids) >= 2:
+                for i in range(len(route_ids) - 1):
+                    source_id = route_ids[i]
+                    target_id = route_ids[i + 1]
 
-                # Get SNR for this hop if available
-                snr = snr_towards[i] if i < len(snr_towards) else None
-                rssi = None  # Not in trace data
+                    # Get SNR for this hop if available
+                    snr = snr_towards[i] if i < len(snr_towards) else None
+                    rssi = None  # Not in trace data
 
-                # Update topology link for this hop
-                NodeTracking._db.update_topology(
-                    source_id,
-                    target_id,
-                    snr=snr,
-                    rssi=rssi,
-                    hop_count=1  # Each link in traceroute is 1 hop
-                )
+                    # Update topology link for this hop
+                    NodeTracking._db.update_topology(
+                        source_id,
+                        target_id,
+                        snr=snr,
+                        rssi=rssi,
+                        hop_count=1  # Each link in traceroute is 1 hop
+                    )
 
-                logger.info(f"  Traceroute hop {i+1}: {source_id} -> {target_id}")
+                    logger.info(f"  Traceroute hop {i+1}: {source_id} -> {target_id}")
 
-            # Store the complete traceroute in the database
+            # Store ALL traceroutes in the database (complete or incomplete)
             from_node_id = packet.get('fromId')
             to_node_id = packet.get('toId')  # Destination, if available
 
@@ -560,11 +566,14 @@ class NodeTracking(plugins.Base):
             NodeTracking._db.insert_traceroute(
                 from_node_id=from_node_id,
                 to_node_id=to_node_id,
-                route_ids=route_ids,
+                route_ids=route_ids,  # May be empty for incomplete traceroutes
                 snr_data=snr_data
             )
 
-            logger.infogreen(f"Traceroute stored: {len(route_ids)} nodes, {' -> '.join([rid[-4:] for rid in route_ids])}")
+            if route_ids:
+                logger.infogreen(f"Traceroute stored: {len(route_ids)} nodes, {' -> '.join([rid[-4:] for rid in route_ids])}")
+            else:
+                logger.infogreen(f"Incomplete traceroute stored: from={from_node_id}, to={to_node_id}, snr={snr_data}")
 
         except Exception as e:
             logger.warn(f"Error processing traceroute: {e}")
