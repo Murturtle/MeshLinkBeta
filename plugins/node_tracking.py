@@ -496,11 +496,11 @@ class NodeTracking(plugins.Base):
     def _process_traceroute(self, packet: Dict[str, Any], interface):
         """Process traceroute packets to build detailed topology"""
         try:
-            decoded = packet.get('decoded', {})
-            traceroute = decoded.get('traceroute', {})
+            # Traceroute data is in the 'trace' field at the top level, not in 'decoded'
+            trace = packet.get('trace', {})
 
             # Get the route from the traceroute packet
-            route = traceroute.get('route', [])
+            route = trace.get('route', [])
 
             if not route or len(route) < 2:
                 logger.info("Traceroute packet has no usable route data")
@@ -528,13 +528,16 @@ class NodeTracking(plugins.Base):
                     route_ids.append(f"!{node_num:08x}")
 
             # Process each hop in the route
+            # Get SNR data - use snrTowards which shows signal from each hop
+            snr_towards = trace.get('snrTowards', [])
+
             for i in range(len(route_ids) - 1):
                 source_id = route_ids[i]
                 target_id = route_ids[i + 1]
 
-                # Get SNR/RSSI if available (some traceroute implementations include this)
-                snr = traceroute.get('snr', [None] * len(route))[i] if traceroute.get('snr') else None
-                rssi = None  # Not typically in traceroute, but could be added
+                # Get SNR for this hop if available
+                snr = snr_towards[i] if i < len(snr_towards) else None
+                rssi = None  # Not in trace data
 
                 # Update topology link for this hop
                 NodeTracking._db.update_topology(
@@ -550,7 +553,9 @@ class NodeTracking(plugins.Base):
             # Store the complete traceroute in the database
             from_node_id = packet.get('fromId')
             to_node_id = packet.get('toId')  # Destination, if available
-            snr_data = traceroute.get('snr') if traceroute.get('snr') else None
+
+            # Store the SNR towards data for the route
+            snr_data = snr_towards if snr_towards else None
 
             NodeTracking._db.insert_traceroute(
                 from_node_id=from_node_id,
