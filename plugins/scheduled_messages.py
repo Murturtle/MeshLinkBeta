@@ -295,21 +295,29 @@ class ScheduledMessageSender(plugins.Base):
         """Start the scheduler when connection is established"""
         self.interface = interface
         self.client = client
-        
+
         if not self.config.get("enabled", False):
             logger.info("Scheduled message sender is disabled")
             return
-        
+
         if not self.message_schedule:
             logger.warn("No scheduled messages to send")
             return
-        
+
         # Start the scheduler thread
         logger.infogreen("Starting scheduled message sender thread")
-        self.statistics["scheduler_started"] = time.time()
-        self.statistics["last_stats_log"] = time.time()
+        startup_time = time.time()
+        self.statistics["scheduler_started"] = startup_time
+        self.statistics["last_stats_log"] = startup_time
         self.stop_event.clear()
-        
+
+        # Initialize last_sent for interval messages to current time
+        # This makes them wait the full interval before first send
+        for msg_id, data in self.message_schedule.items():
+            if data["type"] == "interval" and data["last_sent"] is None:
+                data["last_sent"] = startup_time
+                logger.info(f"Scheduled '{msg_id}' to send in {self._format_interval(data['interval_seconds'])}")
+
         self.scheduler_thread = threading.Thread(
             target=self._scheduler_loop,
             name="SchedulerThread",
@@ -343,11 +351,8 @@ class ScheduledMessageSender(plugins.Base):
 
                     if data["type"] == "interval":
                         # Interval-based scheduling
-                        if data["last_sent"] is None:
-                            # First send - send immediately
-                            should_send = True
-                        elif current_time >= data["last_sent"] + data["interval_seconds"]:
-                            # Time to send again
+                        # last_sent is initialized at startup, so first send waits full interval
+                        if data["last_sent"] is not None and current_time >= data["last_sent"] + data["interval_seconds"]:
                             should_send = True
 
                     elif data["type"] == "scheduled":
@@ -466,7 +471,7 @@ class ScheduledMessageSender(plugins.Base):
         """Calculate and format next send time"""
         if data["type"] == "interval":
             if data["last_sent"] is None:
-                return "now"
+                return "not scheduled"
 
             next_time = data["last_sent"] + data["interval_seconds"]
             seconds_until = next_time - time.time()
