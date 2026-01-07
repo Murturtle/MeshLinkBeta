@@ -589,7 +589,7 @@ function renderTopology() {
     // Set up dimensions - ensure we have a valid width
     const containerWidth = graphContainer.clientWidth || graphContainer.offsetWidth || 800;
     const width = containerWidth > 0 ? containerWidth : 800;
-    const height = 600;
+    const height = 800; // Increased height for better visibility with larger layout
 
     console.log('Container dimensions:', { width, height });
 
@@ -657,7 +657,7 @@ function renderTopology() {
         // Set initial positions in radial layout based on hop count
         const centerX = width / 2;
         const centerY = height / 2;
-        const radiusStep = 120; // Distance between each hop ring
+        const radiusStep = 180; // Distance between each hop ring - increased for less clutter
 
         // Group nodes by their relay node for clustering
         const clusterMap = new Map();
@@ -680,7 +680,7 @@ function renderTopology() {
             // If this node is a relay for others, position it and its cluster together
             if (clusterMap.has(node.id)) {
                 const clusterSize = clusterMap.get(node.id).length + 1; // +1 for relay node itself
-                const arcSize = (2 * Math.PI) / Math.max(nodes.length / 3, clusterSize);
+                const arcSize = (2 * Math.PI) / Math.max(nodes.length / 2, clusterSize * 1.5); // More spacing between clusters
 
                 // Position the relay node
                 if (!processedNodes.has(node.id)) {
@@ -719,27 +719,28 @@ function renderTopology() {
             .force('link', d3.forceLink(links)
                 .id(d => d.id)
                 .distance(d => {
-                    // Shorter distance for relay links to keep clusters tight
+                    // Much shorter distance for relay links to keep clusters very tight
                     if (d.source.id !== 'LOCAL_NODE' && d.target.hops === d.source.hops + 1) {
-                        return 60; // Tight clustering for relay connections
+                        return 40; // Very tight clustering for relay connections
                     }
-                    return 100; // Normal distance for other links
+                    // Longer distance for non-clustered links to spread nodes out
+                    return 180; // Increased distance for better separation
                 })
                 .strength(d => {
-                    // Stronger links for relay connections
+                    // Very strong links for relay connections to pull clusters together
                     if (d.source.id !== 'LOCAL_NODE' && d.target.hops === d.source.hops + 1) {
-                        return 0.7; // Strong clustering
+                        return 0.9; // Very strong clustering
                     }
-                    return 0.3; // Normal strength
+                    return 0.2; // Weaker strength for other links
                 }))
             .force('charge', d3.forceManyBody()
-                .strength(-150))
-            .force('collision', d3.forceCollide().radius(d => d.hops === -1 ? 60 : 50))
+                .strength(-400)) // Increased repulsion to push nodes apart
+            .force('collision', d3.forceCollide().radius(d => d.hops === -1 ? 70 : 60)) // Larger collision radius to prevent overlap
             .force('radial', d3.forceRadial(
                 d => (d.hops + 1) * radiusStep,
                 centerX,
                 centerY
-            ).strength(0.7));
+            ).strength(0.5)); // Reduced radial strength to allow more movement
 
         topologySimulation = simulation;
 
@@ -917,12 +918,14 @@ function getNodeStatusColor(node) {
     const now = new Date();
     const minutesAgo = (now - lastSeen) / 1000 / 60;
 
-    if (minutesAgo < 5) {
+    if (minutesAgo < 60) {
         return '#28a745'; // Green for online
-    } else if (minutesAgo < 60) {
+    } else if (minutesAgo < 300) {
         return '#ffc107'; // Yellow for recent
-    } else {
+    } else if (minutesAgo < 900) {
         return '#dc3545'; // Red for offline
+    } else {
+        return '#6c757d'; // Gray for unknown
     }
 }
 
@@ -1010,7 +1013,7 @@ function addMapLegend() {
     // Create legend control
     const legend = L.control({ position: 'bottomright' });
 
-    legend.onAdd = function (map) {
+    legend.onAdd = function () {
         const div = L.DomUtil.create('div', 'map-legend');
         div.style.background = 'white';
         div.style.padding = '10px';
