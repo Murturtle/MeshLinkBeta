@@ -905,6 +905,27 @@ function initializeMap() {
     }
 }
 
+// Get node status color
+function getNodeStatusColor(node) {
+    if (!node.last_seen_utc) {
+        return '#6c757d'; // Gray for unknown
+    }
+
+    // Add 'Z' suffix if missing to ensure UTC parsing
+    const utcString = node.last_seen_utc.endsWith('Z') ? node.last_seen_utc : node.last_seen_utc + 'Z';
+    const lastSeen = new Date(utcString);
+    const now = new Date();
+    const minutesAgo = (now - lastSeen) / 1000 / 60;
+
+    if (minutesAgo < 5) {
+        return '#28a745'; // Green for online
+    } else if (minutesAgo < 60) {
+        return '#ffc107'; // Yellow for recent
+    } else {
+        return '#dc3545'; // Red for offline
+    }
+}
+
 // Load Map
 function loadMap() {
     // Initialize the map if not already done
@@ -925,7 +946,17 @@ function loadMap() {
 
     // Create markers for each node
     nodesWithGPS.forEach(node => {
-        const marker = L.marker([node.latitude, node.longitude]).addTo(map);
+        const statusColor = getNodeStatusColor(node);
+
+        // Create custom colored marker using circleMarker
+        const marker = L.circleMarker([node.latitude, node.longitude], {
+            radius: 10,
+            fillColor: statusColor,
+            color: '#ffffff',
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.8
+        }).addTo(map);
 
         // Create popup content
         const popupContent = `
@@ -959,10 +990,58 @@ function loadMap() {
         map.fitBounds(bounds, { padding: [50, 50] });
     }
 
+    // Add legend to map
+    addMapLegend();
+
     // Force map to refresh its size (fixes rendering issues)
     setTimeout(() => {
         map.invalidateSize();
     }, 100);
+}
+
+// Add legend to map
+function addMapLegend() {
+    // Remove existing legend if any
+    const existingLegend = document.querySelector('.map-legend');
+    if (existingLegend) {
+        existingLegend.remove();
+    }
+
+    // Create legend control
+    const legend = L.control({ position: 'bottomright' });
+
+    legend.onAdd = function (map) {
+        const div = L.DomUtil.create('div', 'map-legend');
+        div.style.background = 'white';
+        div.style.padding = '10px';
+        div.style.borderRadius = '8px';
+        div.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
+        div.style.fontSize = '14px';
+
+        div.innerHTML = `
+            <div style="font-weight: 600; margin-bottom: 8px; color: #495057;">Node Status</div>
+            <div style="display: flex; align-items: center; margin-bottom: 5px;">
+                <div style="width: 16px; height: 16px; background: #28a745; border-radius: 50%; margin-right: 8px; border: 2px solid white;"></div>
+                <span>Online (&lt;5 min)</span>
+            </div>
+            <div style="display: flex; align-items: center; margin-bottom: 5px;">
+                <div style="width: 16px; height: 16px; background: #ffc107; border-radius: 50%; margin-right: 8px; border: 2px solid white;"></div>
+                <span>Recent (&lt;1 hr)</span>
+            </div>
+            <div style="display: flex; align-items: center; margin-bottom: 5px;">
+                <div style="width: 16px; height: 16px; background: #dc3545; border-radius: 50%; margin-right: 8px; border: 2px solid white;"></div>
+                <span>Offline (&gt;1 hr)</span>
+            </div>
+            <div style="display: flex; align-items: center;">
+                <div style="width: 16px; height: 16px; background: #6c757d; border-radius: 50%; margin-right: 8px; border: 2px solid white;"></div>
+                <span>Unknown</span>
+            </div>
+        `;
+
+        return div;
+    };
+
+    legend.addTo(map);
 }
 
 // Utility: Escape HTML
