@@ -222,10 +222,16 @@ function renderNodes() {
 
 // Get Status Badge
 function getStatusBadge(node) {
-    const lastSeen = new Date(node.last_seen_utc);
+    if (!node.last_seen_utc) {
+        return '<span class="status-badge status-offline">● Unknown</span>';
+    }
+
+    // Add 'Z' suffix if missing to ensure UTC parsing
+    const utcString = node.last_seen_utc.endsWith('Z') ? node.last_seen_utc : node.last_seen_utc + 'Z';
+    const lastSeen = new Date(utcString);
     const now = new Date();
     const minutesAgo = (now - lastSeen) / 1000 / 60;
-    
+
     if (minutesAgo < 5) {
         return '<span class="status-badge status-online">● Online</span>';
     } else if (minutesAgo < 60) {
@@ -271,7 +277,9 @@ function getLocationDisplay(node) {
 function formatTime(isoString) {
     if (!isoString) return 'Never';
 
-    const date = new Date(isoString);
+    // Add 'Z' suffix if missing to ensure UTC parsing
+    const utcString = isoString.endsWith('Z') ? isoString : isoString + 'Z';
+    const date = new Date(utcString);
     const now = new Date();
     const diff = now - date;
     const minutes = Math.floor(diff / 60000);
@@ -290,24 +298,35 @@ function formatTime(isoString) {
 function formatLastSeen(isoString) {
     if (!isoString) return 'Never';
 
-    const date = new Date(isoString);
+    // Add 'Z' suffix if missing to ensure UTC parsing
+    const utcString = isoString.endsWith('Z') ? isoString : isoString + 'Z';
+    const date = new Date(utcString);
     const now = new Date();
     const diff = now - date;
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
 
-    // Format the actual timestamp
+    // Format the actual timestamp in local time
     const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const dateStr = date.toLocaleDateString([], { month: 'short', day: 'numeric' });
 
     // Format relative time
     let relativeTime;
-    if (minutes < 1) relativeTime = 'just now';
-    else if (minutes < 60) relativeTime = `${minutes}m ago`;
-    else if (hours < 24) relativeTime = `${hours}h ago`;
-    else if (days < 7) relativeTime = `${days}d ago`;
-    else relativeTime = `${days}d ago`;
+    if (diff < 0) {
+        // Future timestamp (clock skew)
+        relativeTime = 'clock skew';
+    } else if (minutes < 1) {
+        relativeTime = 'just now';
+    } else if (minutes < 60) {
+        relativeTime = `${minutes}m ago`;
+    } else if (hours < 24) {
+        relativeTime = `${hours}h ago`;
+    } else if (days < 7) {
+        relativeTime = `${days}d ago`;
+    } else {
+        relativeTime = `${days}d ago`;
+    }
 
     // Show both actual time and relative time
     return `<div style="white-space: nowrap;">${dateStr} ${timeStr}</div><div style="font-size: 0.85em; color: #6c757d;">${relativeTime}</div>`;
