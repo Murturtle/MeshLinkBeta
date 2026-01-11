@@ -918,11 +918,11 @@ function getNodeStatusColor(node) {
     const now = new Date();
     const minutesAgo = (now - lastSeen) / 1000 / 60;
 
-    if (minutesAgo < 60) {
+    if (minutesAgo < 180) {
         return '#28a745'; // Green for online
-    } else if (minutesAgo < 300) {
+    } else if (minutesAgo < 360) {
         return '#ffc107'; // Yellow for recent
-    } else if (minutesAgo < 900) {
+    } else if (minutesAgo < 720) {
         return '#dc3545'; // Red for offline
     } else {
         return '#6c757d'; // Gray for unknown
@@ -1025,15 +1025,15 @@ function addMapLegend() {
             <div style="font-weight: 600; margin-bottom: 8px; color: #495057;">Node Status</div>
             <div style="display: flex; align-items: center; margin-bottom: 5px;">
                 <div style="width: 16px; height: 16px; background: #28a745; border-radius: 50%; margin-right: 8px; border: 2px solid white;"></div>
-                <span>Online (&lt;5 min)</span>
+                <span>Online (&lt;3 hours)</span>
             </div>
             <div style="display: flex; align-items: center; margin-bottom: 5px;">
                 <div style="width: 16px; height: 16px; background: #ffc107; border-radius: 50%; margin-right: 8px; border: 2px solid white;"></div>
-                <span>Recent (&lt;1 hr)</span>
+                <span>Recent (&lt;6 hrs)</span>
             </div>
             <div style="display: flex; align-items: center; margin-bottom: 5px;">
                 <div style="width: 16px; height: 16px; background: #dc3545; border-radius: 50%; margin-right: 8px; border: 2px solid white;"></div>
-                <span>Offline (&gt;1 hr)</span>
+                <span>Offline (&gt;12 hrs)</span>
             </div>
             <div style="display: flex; align-items: center;">
                 <div style="width: 16px; height: 16px; background: #6c757d; border-radius: 50%; margin-right: 8px; border: 2px solid white;"></div>
