@@ -22,7 +22,7 @@ class basicEvents(plugins.Base):
         final_message = ""
         send_channel = 0
         if "decoded" not in packet:
-            final_message += f"`{DiscordUtil.genUserName(interface, packet)}` → encrypted/failed"
+            final_message += f"{DiscordUtil.genUserName(interface, packet)} → encrypted/failed"
             DiscordUtil.send_info(final_message, client, cfg.config)
 
             if cfg.config["verbose_packets"]:
@@ -63,12 +63,13 @@ class basicEvents(plugins.Base):
                 if is_self and cfg.config["ignore_self"]:
                     if cfg.config["verbose_packets"]:
                         logger.info("Ignoring self")
+                    return
                 else:
                     final_message += DiscordUtil.genUserName(interface, packet) + " → " + str(portnum)
             except TypeError as e:
                 logger.infoimportant(f"TypeError: {e}. We don't have our own nodenum yet.")
 
-        DiscordUtil.send_info(final_message, client, cfg.config)
+            DiscordUtil.send_info(final_message, client, cfg.config)
                 
             
                 

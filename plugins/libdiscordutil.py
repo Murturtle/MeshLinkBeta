@@ -1,6 +1,7 @@
 import asyncio
 import collections
 import plugins.libmesh as LibMesh
+import plugins.liblogger as logger
 
 _MAX_TRACKED_MESSAGES = 1000
 _packet_message_ids = collections.OrderedDict()
@@ -69,6 +70,7 @@ def genUserName(interface, packet, details=True):
     return ret
 
 def send_msg(message,client,config,channel_id=0,packet_id=None,reply_id=None):
+    logger.info("Discord Msg: " + message)
     if config["use_discord"]:
         if (client.is_ready()):
             if config.get("secondary_channel_message_ids") and channel_id and channel_id > 0:
@@ -95,9 +97,15 @@ def send_msg(message,client,config,channel_id=0,packet_id=None,reply_id=None):
                     _track_message_id(ch_id, packet_id, sent.id)
 
                 asyncio.run_coroutine_threadsafe(_send_to_channel(channel, chan_id), client.loop)
+        else:
+            logger.warn("Tried to send but Discord client not ready yet")
 
 def send_info(message,client,config):
+    logger.info("Discord Info: " + message)
     if config["use_discord"]:
         if (client.is_ready()):
             for i in config["info_channel_ids"]:
                 asyncio.run_coroutine_threadsafe(client.get_channel(i).send(message),client.loop)
+
+        else:
+            logger.warn("Tried to send info but Discord client not ready yet")

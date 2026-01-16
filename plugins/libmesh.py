@@ -10,7 +10,7 @@ def getUserLong(interface,packet):
         return ret
 
     ret = decimal_to_hex(packet["from"])
-    return ret
+    return f"`{ret}`"
 
 def getUserShort(interface,packet):
     ret=None
