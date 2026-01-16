@@ -37,34 +37,34 @@ def genUserName(interface, packet, details=True):
     lat, lon, hasPos = LibMesh.getPosition(interface, packet)
 
     name_parts = []
-    if short is not None:
-        name_parts.append(short)
     if details and packet.get("fromId") is not None:
-        name_parts.append(str(packet["fromId"]))
+        name_parts.append(f"`{packet['fromId']}` |")
+    if short is not None:
+        name_parts.append(f"**{short}** |")
 
     code_segment = " ".join(name_parts)
     if long and nodeinfo_url:
         if code_segment:
-            ret = f"`{code_segment}` "
+            ret = f"{code_segment} "
         else:
             ret = ""
-        ret += f"[{long}](<{nodeinfo_url}>)"
+        ret += f"{long} | [[url](<{nodeinfo_url}>)]"
     else:
         if long:
             name_parts.append(long)
-        ret = f"`{' '.join(name_parts)}`"
+        ret = f"{' '.join(name_parts)}"
 
     if details and hasPos:
-        ret += f" `|` [map](<https://www.google.com/maps/search/?api=1&query={lat}%2C{lon}>)"
+        ret += f" [[map](<https://www.google.com/maps/search/?api=1&query={lat}%2C{lon}>)]"
 
     if "hopLimit" in packet:
         if "hopStart" in packet:
-            ret += f" `{packet['hopStart'] - packet['hopLimit']}`/`{packet['hopStart']}`"
+            ret += f" [{packet['hopStart'] - packet['hopLimit']}/{packet['hopStart']}]"
         else:
-            ret += f" `{packet['hopLimit']}`"
+            ret += f" [{packet['hopLimit']}]"
 
     if "viaMqtt" in packet and str(packet["viaMqtt"]) == "True":
-        ret += " `MQTT`"
+        ret += " [MQTT]"
 
     return ret
 

@@ -22,7 +22,7 @@ class basicEvents(plugins.Base):
         final_message = ""
         send_channel = 0
         if "decoded" not in packet:
-            final_message += DiscordUtil.genUserName(interface, packet) + " > encrypted/failed"
+            final_message += f"`{DiscordUtil.genUserName(interface, packet)}` → encrypted/failed"
             DiscordUtil.send_info(final_message, client, cfg.config)
 
             if cfg.config["verbose_packets"]:
@@ -42,14 +42,14 @@ class basicEvents(plugins.Base):
             reply_id = packet["decoded"].get("replyId") or packet["decoded"].get("reply_id")
 
             if packet.get("from") is not None:
-                logger.infogreen(f"{packet['fromId']}> {text}")
+                logger.infogreen(f"`{packet['fromId']}` → {text}")
             else:
-                logger.infogreen("Unknown ID> " + text)
+                logger.infogreen("`Unknown ID` → " + text)
 
             if text.lower() == "meshlink":
                 LibMesh.sendReply("MeshLink is running on this node - rev " + str(cfg.config["rev"]) + "\n\nuse " + cfg.config["prefix"] + "info for a list of commands", interface, packet)
 
-            final_message += " > " + text
+            final_message += " → " + text
 
             if cfg.config["ping_on_messages"]:
                 final_message += " ||" + cfg.config["message_role"] + "||"
@@ -64,7 +64,7 @@ class basicEvents(plugins.Base):
                     if cfg.config["verbose_packets"]:
                         logger.info("Ignoring self")
                 else:
-                    final_message += DiscordUtil.genUserName(interface, packet) + "> " + str(portnum)
+                    final_message += DiscordUtil.genUserName(interface, packet) + " → " + str(portnum)
             except TypeError as e:
                 logger.infoimportant(f"TypeError: {e}. We don't have our own nodenum yet.")
 
