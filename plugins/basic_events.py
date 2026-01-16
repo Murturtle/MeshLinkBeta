@@ -72,11 +72,8 @@ class basicEvents(plugins.Base):
             DiscordUtil.send_info(final_message, client, cfg.config)
                 
             
-                
-
     def onConnect(self,interface,client):
         logger.infogreen("Node connected")
-
 
         DiscordUtil.send_msg("MeshLink is now running - rev "+str(cfg.config["rev"]), client, cfg.config)
         if(cfg.config["send_start_stop"]):
