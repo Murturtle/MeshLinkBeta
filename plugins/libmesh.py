@@ -168,10 +168,6 @@ def getNodeInfoUrl(interface, packet):
             public_key_value = _coerce_public_key(user_fields["public_key"])
             if public_key_value:
                 _set_proto_field(user, "public_key", public_key_value)
-        if "has_is_unmessagable" in user_fields:
-            has_unmsg_value = _coerce_bool(user_fields["has_is_unmessagable"])
-            if has_unmsg_value is not None:
-                _set_proto_field(user, "has_is_unmessagable", has_unmsg_value)
         if "is_unmessagable" in user_fields:
             unmsg_value = _coerce_bool(user_fields["is_unmessagable"])
             if unmsg_value is not None:
