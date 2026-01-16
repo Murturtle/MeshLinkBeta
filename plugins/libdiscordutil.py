@@ -33,17 +33,29 @@ def _lookup_message_id(channel_id, reply_id):
 def genUserName(interface, packet, details=True):
     short = LibMesh.getUserShort(interface, packet)
     long  = LibMesh.getUserLong(interface, packet) or ""
+    nodeinfo_url = LibMesh.getNodeInfoUrl(interface, packet)
     lat, lon, hasPos = LibMesh.getPosition(interface, packet)
 
-    ret = f"`{short} " if short is not None else "`"
+    name_parts = []
+    if short is not None:
+        name_parts.append(short)
+    if details and packet.get("fromId") is not None:
+        name_parts.append(str(packet["fromId"]))
 
-    if details:
-        if packet.get("fromId") is not None:
-            ret += f"{packet['fromId']} "
-    ret += f"{long}`"
+    code_segment = " ".join(name_parts)
+    if long and nodeinfo_url:
+        if code_segment:
+            ret = f"`{code_segment}` "
+        else:
+            ret = ""
+        ret += f"[{long}](<{nodeinfo_url}>)"
+    else:
+        if long:
+            name_parts.append(long)
+        ret = f"`{' '.join(name_parts)}`"
 
     if details and hasPos:
-        ret += f" [map](<https://www.google.com/maps/search/?api=1&query={lat}%2C{lon}>)"
+        ret += f" `|` [map](<https://www.google.com/maps/search/?api=1&query={lat}%2C{lon}>)"
 
     if "hopLimit" in packet:
         if "hopStart" in packet:
