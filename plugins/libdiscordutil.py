@@ -70,7 +70,6 @@ def genUserName(interface, packet, details=True):
     return ret
 
 def send_msg(message,client,config,channel_id=0,packet_id=None,reply_id=None):
-    logger.info("Discord Msg: " + message)
     if config["use_discord"]:
         if (client.is_ready()):
             if config.get("secondary_channel_message_ids") and channel_id and channel_id > 0:
@@ -101,7 +100,6 @@ def send_msg(message,client,config,channel_id=0,packet_id=None,reply_id=None):
             logger.warn("Tried to send but Discord client not ready yet")
 
 def send_info(message,client,config):
-    logger.info("Discord Info: " + message)
     if config["use_discord"]:
         if (client.is_ready()):
             for i in config["info_channel_ids"]:

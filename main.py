@@ -110,8 +110,6 @@ def onConnection(interface, topic=pub.AUTO_TOPIC):
             inst.onConnect(interface,client)
 
 def onReceive(packet, interface):
-    # print (packet)
-    # print ("----------------------------")
     for p in Base.plugins:
         inst = p()
         if hasattr(inst, "onReceive") and callable(inst.onReceive):
