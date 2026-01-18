@@ -60,13 +60,13 @@ def genUserName(interface, packet, details=True):
         else:
             result += f" {packet['hopLimit']}"
     
-    # Close code block
-    result += "`"
-    
     # Add MQTT indicator
     if "viaMqtt" in packet and str(packet["viaMqtt"]) == "True":
-        result += "`[MQTT]`"
+        result += "[MQTT]"
     
+    # Close code block
+    result += "`"
+
     # Add URL link
     if nodeinfo_url:
         result += f" [url](<{nodeinfo_url}>)"
