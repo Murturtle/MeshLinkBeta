@@ -46,18 +46,8 @@ def genUserName(interface, packet, details=True):
     
     if short:
         parts.append(short)
-    elif long:
-        # If no short name but have long name, use it
-        parts.append(long)
-    elif details and packet.get("fromId") is not None:
-        # If no names but have fromId, use "Unknown"
-        parts.append("Unknown")
-    else:
-        # No names and no fromId (shouldn't happen but just in case)
-        parts.append("Unknown")
     
-    # If we have long name and already added short, add long too
-    if long and short:
+    if long:
         parts.append(long)
     
     # Start with opening backtick and join parts
