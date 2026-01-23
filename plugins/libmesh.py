@@ -52,6 +52,32 @@ def _set_proto_enum(message, field_name, value):
     except (TypeError, ValueError):
         return
 
+def _coerce_bytes(value):
+    if isinstance(value, bytes):
+        return value
+    if isinstance(value, str):
+        try:
+            return base64.b64decode(value)
+        except (ValueError, TypeError):
+            return None
+    return None
+
+def _coerce_macaddr(value):
+    if isinstance(value, bytes):
+        return value
+    if isinstance(value, str):
+        cleaned = value.replace(":", "").replace("-", "")
+        try:
+            return bytes.fromhex(cleaned)
+        except ValueError:
+            return None
+    if isinstance(value, (list, tuple)):
+        try:
+            return bytes(int(b) & 0xFF for b in value)
+        except (TypeError, ValueError):
+            return None
+    return None
+
 def getNodeInfoUrl(interface, packet):
     node = getNode(interface, packet)
     if not isinstance(node, dict):
@@ -116,13 +142,17 @@ def getNodeInfoUrl(interface, packet):
         if "hw_model" in user_fields:
             _set_proto_enum(user, "hw_model", user_fields["hw_model"])
         if "macaddr" in user_fields:
-            _set_proto_field(user, "macaddr", user_fields["macaddr"])
+            macaddr_value = _coerce_macaddr(user_fields["macaddr"])
+            if macaddr_value:
+                _set_proto_field(user, "macaddr", macaddr_value)
         if "is_licensed" in user_fields:
             _set_proto_field(user, "is_licensed", user_fields["is_licensed"])
         if "role" in user_fields:
             _set_proto_enum(user, "role", user_fields["role"])
         if "public_key" in user_fields:
-            _set_proto_field(user, "public_key", user_fields["public_key"])
+            public_key_value = _coerce_bytes(user_fields["public_key"])
+            if public_key_value:
+                _set_proto_field(user, "public_key", public_key_value)
         if "is_unmessagable" in user_fields:
             _set_proto_field(user, "is_unmessagable", user_fields["is_unmessagable"])
         if user.ListFields():
