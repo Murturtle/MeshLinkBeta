@@ -124,7 +124,7 @@ def format_text_message(interface, packet, config):
 
     username = genUserName(interface, packet, details=False)
     text = packet["decoded"]["text"]
-    message = f"{username} >> {text}"
+    message = f"{username} > {text}"
     
     if config["ping_on_messages"]:
         message += f" ||{config['message_role']}||"
@@ -134,12 +134,12 @@ def format_text_message(interface, packet, config):
 def format_encrypted_message(interface, packet):
 
     username = genUserName(interface, packet)
-    return f"{username} >> encrypted/failed"
+    return f"{username} > encrypted/failed"
 
 def format_packet_info(interface, packet, portnum):
 
     username = genUserName(interface, packet)
-    return f"{username} >> {portnum}"
+    return f"{username} > {portnum}"
 
 def format_system_message(message, is_header=False):
 
@@ -149,4 +149,4 @@ def format_system_message(message, is_header=False):
 
 def format_command_response(response):
 
-    return f"`MeshLink` >> {response}"
+    return f"`MeshLink` > {response}"
