@@ -40,7 +40,8 @@ class simpleCommand():
                         LibMesh.sendReply(reply, interface, packet)
 
                         if(cfg.config["send_mesh_commands_to_discord"]):
-                                DiscordUtil.send_msg("`MeshLink`> "+reply, client, cfg.config)
+                            formatted_reply = DiscordUtil.format_command_response(reply)
+                            DiscordUtil.send_msg(formatted_reply, client, cfg.config)
                     
     
     def executeCommand(self, packet, interface, client, args):
