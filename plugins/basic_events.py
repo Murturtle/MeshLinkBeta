@@ -37,8 +37,12 @@ class basicEvents(plugins.Base):
         if portnum == "TEXT_MESSAGE_APP":
             if "channel" in packet:
                 send_channel = int(packet["channel"])
+                
+            try:
+                text = packet["decoded"]["text"]
+            except KeyError:
+                return
             
-            text = packet["decoded"]["text"]
             reply_id = packet["decoded"].get("replyId") or packet["decoded"].get("reply_id")
 
             if packet.get("from") is not None:
