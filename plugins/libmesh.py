@@ -1,6 +1,7 @@
 import base64
 import cfg
 from meshtastic.protobuf import mesh_pb2
+from meshtastic import BROADCAST_ADDR
 
 def getUserLong(interface,packet):
     ret=None
@@ -181,16 +182,27 @@ def getPosition(interface,packet):
     return lat, long, hasPos
 
 
-def sendReply(text, interface, packet, channelIndex = -1):
-    ret = packet
+def sendReply(text, interface, packet):
+    # Incoming channel (default to 0 if missing)
+    incoming_ch = int(packet.get("channel", 0))
 
-    if(channelIndex == -1):
-        channelIndex = cfg.config["send_channel_index"]
-        
-    to = 4294967295 # ^all
+    # Config override only for incoming channel 0
+    cfg_ch = int(cfg.config.get("send_channel_index", 0))
 
-    if(packet["to"] == interface.localNode.nodeNum):
-         to = packet["from"]
-    interface.sendText(text=text,destinationId=to,channelIndex=channelIndex)
+    if incoming_ch == 0 and cfg_ch != 0:
+        out_ch = cfg_ch
+    else:
+        out_ch = incoming_ch
 
-    return ret
+    # Destination: reply direct if addressed to us, otherwise broadcast
+    to = BROADCAST_ADDR
+    if int(packet.get("to", BROADCAST_ADDR)) == int(interface.localNode.nodeNum):
+        to = packet.get("from", BROADCAST_ADDR)
+
+    interface.sendText(
+        text=text,
+        destinationId=to,
+        channelIndex=out_ch
+    )
+
+    return packet
