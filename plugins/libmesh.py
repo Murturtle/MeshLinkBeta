@@ -1,5 +1,6 @@
 import base64
 import cfg
+import time
 from meshtastic.protobuf import mesh_pb2
 from meshtastic import BROADCAST_ADDR
 
@@ -200,6 +201,7 @@ def sendReply(text, interface, packet):
     if int(packet.get("to", BROADCAST_ADDR)) == int(interface.localNode.nodeNum):
         to = packet.get("from", BROADCAST_ADDR)
 
+    time.sleep(0.5)
     interface.sendText(
         text=text,
         destinationId=to,
