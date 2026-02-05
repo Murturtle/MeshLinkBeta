@@ -41,10 +41,11 @@ class simpleCommand():
 
                         if(cfg.config["send_mesh_commands_to_discord"]):
                             formatted_reply = DiscordUtil.format_command_response(reply)
-                            DiscordUtil.send_msg(formatted_reply, client, cfg.config)
+                            incoming_ch = packet.get("channel", 0)
+                            discord_ch = LibMesh.resolve_send_channel_index(incoming_ch)
+                            DiscordUtil.send_msg(formatted_reply, client, cfg.config, discord_ch)
                     
     
     def executeCommand(self, packet, interface, client, args):
         return self.callback(packet, interface, client, args)
         
-

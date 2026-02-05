@@ -182,17 +182,18 @@ def getPosition(interface,packet):
     return lat, long, hasPos
 
 
+def resolve_send_channel_index(incoming_ch):
+    incoming_ch = int(incoming_ch or 0)
+    cfg_ch = int(cfg.config.get("send_channel_index", 0))
+    if incoming_ch == 0 and cfg_ch != 0:
+        return cfg_ch
+    return incoming_ch
+
+
 def sendReply(text, interface, packet):
     # Incoming channel (default to 0 if missing)
     incoming_ch = int(packet.get("channel", 0))
-
-    # Config override only for incoming channel 0
-    cfg_ch = int(cfg.config.get("send_channel_index", 0))
-
-    if incoming_ch == 0 and cfg_ch != 0:
-        out_ch = cfg_ch
-    else:
-        out_ch = incoming_ch
+    out_ch = resolve_send_channel_index(incoming_ch)
 
     # Destination: reply direct if addressed to us, otherwise broadcast
     to = BROADCAST_ADDR

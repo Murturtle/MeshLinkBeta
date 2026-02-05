@@ -20,12 +20,14 @@ import plugins.libdiscordutil as DiscordUtil
 from datetime import datetime
 import math
 import plugins.libcommand as LibCommand
+import plugins.libmesh as LibMesh
 
 
 def handler(signum, frame):
     logger.infogreen("MeshLink is now stopping!")
     if(cfg.config["send_start_stop"]):
-        interface.sendText("MeshLink is now stopping!",channelIndex = cfg.config["send_channel_index"])
+        channel_index = LibMesh.resolve_send_channel_index(0)
+        interface.sendText("MeshLink is now stopping!", channelIndex=channel_index)
     exit(1)
 
 signal.signal(signal.SIGINT, handler)
@@ -181,10 +183,12 @@ if cfg.config["use_discord"]:
                 else:
                     final_message = trunk_message
 
-                if message.channel.id in cfg.config.get("secondary_channel_message_ids", []):
-                    channel_index = cfg.config["secondary_channel_message_ids"].index(message.channel.id) + 1
+                secondary_ids = cfg.config.get("secondary_channel_message_ids", [])
+                if message.channel.id in secondary_ids:
+                    channel_index = secondary_ids.index(message.channel.id) + 1
                 else:
                     channel_index = cfg.config["send_channel_index"]
+                channel_index = LibMesh.resolve_send_channel_index(channel_index)
 
                 if len(final_message) < cfg.config["max_message_length"] - 1:
                     await message.reply(final_message)
