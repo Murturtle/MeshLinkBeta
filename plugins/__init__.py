@@ -3,6 +3,7 @@
 import os
 import traceback
 from importlib import util
+import plugins.liblogger as logger
 
 
 class Base:
@@ -26,15 +27,39 @@ def load_module(path):
     return module
 
 
-# Get current path
 path = os.path.abspath(__file__)
 dirpath = os.path.dirname(path)
 
+enabled_file = os.path.join(os.getcwd(), 'plugins', 'plugins-enabled')
+enabled = set()
+
+if os.path.exists(enabled_file):
+    try:
+        with open(enabled_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                enabled.add(line)
+    except Exception:
+        traceback.print_exc()
+else:
+    logger.warn("No plugins-enabled file found")
+    exit(1)
+
 for fname in os.listdir(dirpath):
-    # Load only "real modules"
-    if not fname.startswith('.') and ( not fname.startswith('__')  ) and fname.endswith('.py') and not fname.startswith("lib"):
-        try:
-            load_module(os.path.join(dirpath, fname))
-            print("[INFO] Loaded file "+fname)
-        except Exception:
-            traceback.print_exc()
+    if fname.startswith('.') or fname.startswith('__') or not fname.endswith('.py'):
+        continue
+    if fname.startswith('lib'):
+        continue
+
+    base = fname[:-3]
+    if base not in enabled:
+        logger.infoimportant(f"Plugin {base} not enabled")
+        continue
+
+    try:
+        load_module(os.path.join(dirpath, fname))
+        logger.info("Loaded file "+fname)
+    except Exception:
+        traceback.print_exc()

@@ -50,6 +50,7 @@ config_options = [
     "send_packets",
     "ping_on_messages",
     "message_role",
+    "permit_broadcast_of_discord_messages",
     "send_mesh_commands_to_discord",
     "prefix",
     "use_serial",
