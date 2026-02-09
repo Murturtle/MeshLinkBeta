@@ -1,7 +1,7 @@
 # Read each setting carefully and modify to your needs
 
 ### UPDATES
-rev: 23 # increment after update!
+rev: 24 # increment after update!
 ignore_update_prompt: False # set this to True if you do not want to answer y/n every time there is an update (set to True if using auto restart/startup)
 check_for_updates: True # set to False to disable update checking
 
