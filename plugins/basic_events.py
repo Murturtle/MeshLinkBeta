@@ -51,7 +51,12 @@ class basicEvents(plugins.Base):
                 logger.infogreen("`Unknown ID` → " + text)
 
             if text.lower() == "meshlink":
-                LibMesh.sendReply("MeshLink is running on this node - rev " + str(cfg.config["rev"]) + "\n\nuse " + cfg.config["prefix"] + "info for a list of commands", interface, packet)
+                reply = "MeshLink is running on this node - rev " + str(cfg.config["rev"]) + "\n\nuse " + cfg.config["prefix"] + "info for a list of commands"
+                LibMesh.sendReply(reply, interface, packet)
+                if cfg.config["send_mesh_commands_to_discord"]:
+                    formatted_reply = DiscordUtil.format_command_response(reply)
+                    discord_ch = LibMesh.resolve_send_channel_index(send_channel)
+                    DiscordUtil.send_msg(formatted_reply, client, cfg.config, discord_ch)
 
             final_message = DiscordUtil.format_text_message(interface, packet, cfg.config)
 
