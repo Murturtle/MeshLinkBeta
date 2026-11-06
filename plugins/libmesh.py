@@ -205,7 +205,8 @@ def sendReply(text, interface, packet):
     interface.sendText(
         text=text,
         destinationId=to,
-        channelIndex=out_ch
+        channelIndex=out_ch,
+        replyId=packet.get("id")
     )
 
     return packet
