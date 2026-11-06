@@ -220,15 +220,17 @@ if cfg.config["use_discord"]:
                     channel_index = cfg.config["send_channel_index"]
                 channel_index = LibMesh.resolve_send_channel_index(channel_index)
 
+                reply_id = DiscordUtil.get_reply_id(message)
                 if len(final_message) < cfg.config["max_message_length"] - 1:
                     await message.reply(final_message)
-                    interface.sendText(final_message, channelIndex=channel_index)
+                    sent_packet = interface.sendText(final_message, channelIndex=channel_index, replyId=reply_id)
                     logger.infodiscord(final_message)
                 else:
                     short_msg = final_message[:cfg.config["max_message_length"]]
                     await message.reply("(shortend) " + short_msg)
-                    interface.sendText(short_msg, channelIndex=channel_index)
+                    sent_packet = interface.sendText(short_msg, channelIndex=channel_index, replyId=reply_id)
                     logger.infodiscord(short_msg)
+                DiscordUtil.track_message(message.channel.id, sent_packet.id, message.id)
                 #await message.delete()
 
             else:

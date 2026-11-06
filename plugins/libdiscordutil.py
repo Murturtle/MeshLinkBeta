@@ -12,14 +12,14 @@ def _safe_int(value):
     except (TypeError, ValueError):
         return None
 
-def _track_message_id(channel_id, packet_id, message_id):
+def track_message(channel_id, packet_id, message_id):
     channel_id = _safe_int(channel_id)
     packet_id = _safe_int(packet_id)
     message_id = _safe_int(message_id)
     if channel_id is None or packet_id is None or message_id is None:
         return
     key = (channel_id, packet_id)
-    _packet_message_ids[key] = message_id
+    _packet_message_ids.setdefault(key, message_id)
     _packet_message_ids.move_to_end(key)
     while len(_packet_message_ids) > _MAX_TRACKED_MESSAGES:
         _packet_message_ids.popitem(last=False)
@@ -30,6 +30,15 @@ def _lookup_message_id(channel_id, reply_id):
     if channel_id is None or reply_id is None:
         return None
     return _packet_message_ids.get((channel_id, reply_id))
+
+def get_reply_id(message):
+    reference = message.reference
+    if reference is None or reference.channel_id != message.channel.id:
+        return None
+    for (channel_id, packet_id), message_id in reversed(_packet_message_ids.items()):
+        if channel_id == message.channel.id and message_id == reference.message_id:
+            return packet_id
+    return None
 
 def genUserName(interface, packet, details=True):
 
@@ -101,7 +110,7 @@ def send_msg(message,client,config,channel_id=0,packet_id=None,reply_id=None):
                     else:
                         sent = await ch.send(message)
 
-                    _track_message_id(ch_id, packet_id, sent.id)
+                    track_message(ch_id, packet_id, sent.id)
 
                 asyncio.run_coroutine_threadsafe(_send_to_channel(channel, chan_id), client.loop)
         else:
