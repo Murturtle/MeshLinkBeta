@@ -19,6 +19,11 @@
 ### Discord
 send (message)
 
+Use Discord’s Reply action on a forwarded mesh message and send `$send your reply`
+(using your configured prefix) to include its Meshtastic reply ID. Mesh replies
+to Discord-originated packets link back to the original Discord message. Links
+use the existing in-memory cache and expire after restart or cache eviction.
+
 ## Setup 
 
  1. Download the python script and config-example.yml from Github
