@@ -6,6 +6,7 @@ update_url = "https://github.com/Murturtle/MeshLinkBeta"
 import yaml
 import xml.dom.minidom
 import os
+import subprocess
 from pubsub import pub
 import discord
 from meshtastic.tcp_interface import TCPInterface
@@ -34,6 +35,18 @@ signal.signal(signal.SIGINT, handler)
 
 with open("./config.yml",'r') as file:
     cfg.config = yaml.safe_load(file)
+
+try:
+    added_options = cfg.add_missing_options()
+    if added_options:
+        logger.info("Added config defaults: " + ", ".join(added_options))
+except (OSError, ValueError, yaml.YAMLError) as error:
+    logger.warn("Could not add missing config defaults: " + str(error))
+
+try:
+    cfg.sync_revision()
+except (OSError, ValueError) as error:
+    logger.warn("Could not sync config revision from local rev file: " + str(error))
 
 config_options = [
     "rev",
@@ -83,13 +96,29 @@ if(cfg.config["check_for_updates"]):
         if(cfg.config["rev"] < int(oversion.text)):
             logger.infoimportant("New MeshLink update ready "+update_url)
             logger.warn("Remember after the update to double check the plugins you want disabled stay disabled")
-            logger.warn("Also remember to increment rev in config.yml")
             if(not cfg.config["ignore_update_prompt"]):
                 if(input("       Would you like to update MeshLink? y/n ")=="y"):
                     logger.info("running: git pull "+update_url +" main")
-                    os.system("git pull "+update_url+" main")
-                    logger.infogreen("Start MeshLink to apply updates!")
-                    exit(1)
+                    try:
+                        result = subprocess.run(["git", "pull", update_url, "main"])
+                    except OSError as error:
+                        logger.warn("Could not run git pull: " + str(error))
+                    else:
+                        if result.returncode == 0:
+                            try:
+                                added_options = cfg.add_missing_options()
+                                if added_options:
+                                    logger.info("Added config defaults: " + ", ".join(added_options))
+                            except (OSError, ValueError, yaml.YAMLError) as error:
+                                logger.warn("Update downloaded, but could not add config defaults: " + str(error))
+                            try:
+                                cfg.sync_revision()
+                            except (OSError, ValueError) as error:
+                                logger.warn("Update downloaded, but could not sync config revision: " + str(error))
+                            logger.infogreen("Start MeshLink to apply updates!")
+                            exit(1)
+                        else:
+                            logger.warn("git pull failed; config revision was not changed by the updater")
                 else:
                     logger.infoimportant("Ignoring update - use the following command to update: git pull "+update_url+" main")
         else:
