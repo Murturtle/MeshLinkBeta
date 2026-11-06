@@ -40,7 +40,11 @@ You may receive a log in the console like this:
 `[INFO] New MeshLink update ready https://github.com/Murturtle/MeshLinkBeta`
 
 run `git pull https://github.com/Murturtle/MeshLinkBeta main` to pull the latest version without overriding config
-Make sure to increment the `rev` setting in `config.yml` or you will keep getting notified that there is an update!
+Restart MeshLink after updating. At startup, MeshLink automatically copies the installed version from the local `rev` file into `config.yml`, preserving your other settings and comments. This also happens immediately after a successful update through the interactive prompt. A failed `git pull` does not advance the config revision.
+
+Missing top-level settings from `config-example copy.yml` (or `config-example.yml`, when present) are automatically added to `config.yml` at startup and after a successful interactive update. Existing values and comments are preserved. New settings use the example defaults; review them after updating.
+
+`ignore_update_prompt: True` skips the interactive prompt; it does not automatically download updates. Revision syncing still runs when `check_for_updates` is disabled.
 
 ## Suggestions/Feature Requests
 Put them in issues.
