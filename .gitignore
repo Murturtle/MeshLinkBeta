@@ -8,3 +8,4 @@ mise.toml
 plugins/gpt-config-example.yml
 plugins-disabled/gpt-config-example.yml
 plugins/gpt.py
+.DS_Store
